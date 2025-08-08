@@ -1,0 +1,284 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:FlexiPane.Controls">
+
+    <!-- BooleanToVisibilityConverter -->
+    <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+
+    <!-- FlexiPanel 기본 스타일 -->
+    <Style TargetType="{x:Type controls:FlexiPanel}">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type controls:FlexiPanel}">
+                    <Border Background="{TemplateBinding Background}">
+                        <ContentPresenter x:Name="PART_RootContent" 
+                                        Content="{TemplateBinding RootContent}" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- FlexiPaneContainer 기본 스타일 -->
+    <Style TargetType="{x:Type controls:FlexiPaneContainer}">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type controls:FlexiPaneContainer}">
+                    <Grid x:Name="PART_ContainerGrid" 
+                          Background="{TemplateBinding Background}">
+                        <!-- 분할된 영역들과 GridSplitter가 동적으로 배치됨 -->
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- FlexiPaneItem Default Style -->
+    <Style TargetType="{x:Type controls:FlexiPaneItem}">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type controls:FlexiPaneItem}">
+                    <Grid x:Name="PART_ContainerGrid" Background="Transparent">
+                        
+                        <!-- Selection Border (shows when selected) -->
+                        <Border x:Name="SelectionBorder"
+                                BorderThickness="2"
+                                BorderBrush="#FF007ACC"
+                                CornerRadius="2"
+                                Visibility="Collapsed"/>
+                        
+                        <!-- Actual content first -->
+                        <ContentPresenter />
+                        
+                        <!-- Mouse over effect (overlay on content) -->
+                        <Border x:Name="HoverBorder"
+                                Background="Transparent"
+                                BorderBrush="#30007ACC"
+                                BorderThickness="0"
+                                CornerRadius="2"
+                                IsHitTestVisible="False">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Path=(controls:FlexiPanel.IsSplitModeActive), RelativeSource={RelativeSource AncestorType=controls:FlexiPaneItem}}" Value="True">
+                                            <Setter Property="IsHitTestVisible" Value="True" />
+                                        </DataTrigger>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="BorderThickness" Value="2" />
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                        </Border>
+
+                        <!-- Close button - Bound to FlexiPanel's ShowCloseButtons -->
+                        <Button x:Name="PART_CloseButton"
+                                Width="24" Height="24"
+                                Margin="4"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Top"
+                                Panel.ZIndex="1000"
+                                Background="#CCFF4444"
+                                BorderBrush="#FFFF4444"
+                                BorderThickness="1"
+                                Cursor="Hand"
+                                Command="{TemplateBinding CloseCommand}"
+                                ToolTip="Close Pane"
+                                Visibility="{Binding Path=(controls:FlexiPanel.ShowCloseButtons), RelativeSource={RelativeSource Self}, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}"
+                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                            BorderThickness="{TemplateBinding BorderThickness}"
+                                            CornerRadius="12">
+                                        <Path Width="8" Height="8"
+                                              Stroke="White"
+                                              StrokeThickness="2"
+                                              Data="M0,0 L8,8 M0,8 L8,0"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="#FFFF4444" />
+                                            <Setter Property="BorderBrush" Value="#FFFF6666" />
+                                        </Trigger>
+                                        <Trigger Property="IsPressed" Value="True">
+                                            <Setter Property="Background" Value="#FFDD2222" />
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+
+                        <!-- Split mode overlay - Bound to FlexiPanel's Attached Property -->
+                        <Grid x:Name="PART_SplitOverlay"
+                              Panel.ZIndex="500"
+                              Background="#80000000"
+                              Focusable="True"
+                              Visibility="{Binding Path=(controls:FlexiPanel.IsSplitModeActive), RelativeSource={RelativeSource Self}, Converter={StaticResource BooleanToVisibilityConverter}}">
+
+                            <!-- Dark background -->
+                            <Border Margin="2"
+                                    Background="#C0000000"
+                                    CornerRadius="4" 
+                                    Opacity="0.8"/>
+
+                            <!-- Split guide -->
+                            <Grid Background="Transparent">
+                                <!-- Dynamic split guide lines (red solid lines) -->
+                                <Line x:Name="PART_VerticalGuideLine"
+                                      X1="0" Y1="0" X2="0" Y2="100"
+                                      Stroke="#FFFF0000"
+                                      StrokeThickness="3"
+                                      Opacity="0"
+                                      Panel.ZIndex="600" />
+                                
+                                <Line x:Name="PART_HorizontalGuideLine"
+                                      X1="0" Y1="0" X2="100" Y2="0"
+                                      Stroke="#FFFF0000"
+                                      StrokeThickness="3"
+                                      Opacity="0"
+                                      Panel.ZIndex="600" />
+
+                                <!-- Top guide (vertical split) -->
+                                <Border Height="20"
+                                        Margin="20,4,20,0"
+                                        VerticalAlignment="Top"
+                                        Background="#AA007ACC"
+                                        BorderBrush="White"
+                                        BorderThickness="0,0,0,2"
+                                        CornerRadius="2,2,0,0">
+                                    <TextBlock HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
+                                               FontSize="10"
+                                               FontWeight="Bold"
+                                               Foreground="White"
+                                               Text="▲ Vertical Split" />
+                                </Border>
+
+                                <!-- Bottom guide (vertical split) -->
+                                <Border Height="20"
+                                        Margin="20,0,20,4"
+                                        VerticalAlignment="Bottom"
+                                        Background="#AA007ACC"
+                                        BorderBrush="White"
+                                        BorderThickness="0,2,0,0"
+                                        CornerRadius="0,0,2,2">
+                                    <TextBlock HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
+                                               FontSize="10"
+                                               FontWeight="Bold"
+                                               Foreground="White"
+                                               Text="▼ Vertical Split" />
+                                </Border>
+
+                                <!-- Left guide (horizontal split) -->
+                                <Border Width="20"
+                                        Margin="4,20,0,20"
+                                        HorizontalAlignment="Left"
+                                        Background="#AA007ACC"
+                                        BorderBrush="White"
+                                        BorderThickness="0,0,2,0"
+                                        CornerRadius="2,0,0,2">
+                                    <TextBlock HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
+                                               FontSize="10"
+                                               FontWeight="Bold"
+                                               Foreground="White"
+                                               Text="◀">
+                                        <TextBlock.LayoutTransform>
+                                            <RotateTransform Angle="90" />
+                                        </TextBlock.LayoutTransform>
+                                    </TextBlock>
+                                </Border>
+
+                                <!-- Right guide (horizontal split) -->
+                                <Border Width="20"
+                                        Margin="0,20,4,20"
+                                        HorizontalAlignment="Right"
+                                        Background="#AA007ACC"
+                                        BorderBrush="White"
+                                        BorderThickness="2,0,0,0"
+                                        CornerRadius="0,2,2,0">
+                                    <TextBlock HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
+                                               FontSize="10"
+                                               FontWeight="Bold"
+                                               Foreground="White"
+                                               Text="▶">
+                                        <TextBlock.LayoutTransform>
+                                            <RotateTransform Angle="90" />
+                                        </TextBlock.LayoutTransform>
+                                    </TextBlock>
+                                </Border>
+
+                                <!-- Custom guide panel -->
+                                <ContentPresenter x:Name="PART_CustomGuideContent"
+                                                Content="{TemplateBinding SplitGuideContent}"
+                                                ContentTemplate="{TemplateBinding SplitGuideContentTemplate}"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"
+                                                Panel.ZIndex="550" />
+
+                                <!-- Default center guide panel -->
+                                <Border x:Name="PART_DefaultGuidePanel"
+                                        Margin="40"
+                                        Padding="16"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Background="#F0FFFFFF"
+                                        BorderBrush="#FF007ACC"
+                                        BorderThickness="2"
+                                        CornerRadius="6">
+                                    <StackPanel>
+                                        <TextBlock Margin="4"
+                                                   HorizontalAlignment="Center"
+                                                   FontSize="18"
+                                                   FontWeight="Bold"
+                                                   Foreground="#FF007ACC"
+                                                   Text="🔄 Split Mode" />
+                                        <TextBlock Margin="6,2"
+                                                   HorizontalAlignment="Center"
+                                                   FontSize="12"
+                                                   Foreground="#FF333333"
+                                                   Text="↑↓ Click top/bottom: Vertical split" />
+                                        <TextBlock Margin="6,2"
+                                                   HorizontalAlignment="Center"
+                                                   FontSize="12"
+                                                   Foreground="#FF333333"
+                                                   Text="←→ Click left/right: Horizontal split" />
+                                        <TextBlock Margin="6,2"
+                                                   HorizontalAlignment="Center"
+                                                   FontSize="12"
+                                                   Foreground="#FF666666"
+                                                   Text="ESC: Exit split mode" />
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+                        </Grid>
+                    </Grid>
+                    
+                    <ControlTemplate.Triggers>
+                        <!-- Show selection border when IsSelected is true -->
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="SelectionBorder" Property="Visibility" Value="Visible"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

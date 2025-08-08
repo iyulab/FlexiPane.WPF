@@ -1,0 +1,26 @@
+﻿<Window x:Class="FlexiPane.Samples.DefaultApp.MainWindowSimple"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:flexiPane="clr-namespace:FlexiPane.Controls;assembly=FlexiPane"
+        mc:Ignorable="d"
+        Title="FlexiPane Simple Demo" Height="600" Width="900">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        
+        <!-- Simple Toolbar -->
+        <ToolBar Grid.Row="0">
+            <Button Content="Toggle Split Mode" Click="ToggleSplitMode_Click"/>
+            <Separator/>
+            <Button Content="Split Vertical" Click="SplitVertical_Click"/>
+            <Button Content="Split Horizontal" Click="SplitHorizontal_Click"/>
+        </ToolBar>
+
+        <!-- Minimal FlexiPanel usage - just add the control! -->
+        <flexiPane:FlexiPanel Grid.Row="1" x:Name="FlexiPanel" />
+    </Grid>
+</Window>

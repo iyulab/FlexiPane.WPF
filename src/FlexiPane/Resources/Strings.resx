@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="ClosePane" xml:space="preserve">
+    <value>Close Pane</value>
+    <comment>Tooltip for close button</comment>
+  </data>
+  <data name="SplitMode" xml:space="preserve">
+    <value>Split Mode</value>
+    <comment>Title for split mode overlay</comment>
+  </data>
+  <data name="VerticalSplitInstruction" xml:space="preserve">
+    <value>↑↓ Click top/bottom: Vertical split</value>
+    <comment>Instruction for vertical split</comment>
+  </data>
+  <data name="HorizontalSplitInstruction" xml:space="preserve">
+    <value>←→ Click left/right: Horizontal split</value>
+    <comment>Instruction for horizontal split</comment>
+  </data>
+  <data name="ExitSplitMode" xml:space="preserve">
+    <value>ESC: Exit split mode</value>
+    <comment>Instruction to exit split mode</comment>
+  </data>
+  <data name="VerticalSplitGuide" xml:space="preserve">
+    <value>▲ Vertical Split</value>
+    <comment>Guide text for vertical split</comment>
+  </data>
+  <data name="HorizontalSplitGuide" xml:space="preserve">
+    <value>◀ Horizontal Split</value>
+    <comment>Guide text for horizontal split</comment>
+  </data>
+  <data name="MainPaneCannotBeClosed" xml:space="preserve">
+    <value>Main pane cannot be closed.</value>
+    <comment>Error message when trying to close main pane</comment>
+  </data>
+  <data name="SplitRequested" xml:space="preserve">
+    <value>Split Requested</value>
+    <comment>Split request dialog title</comment>
+  </data>
+</root>
