@@ -67,20 +67,11 @@ jobs:
       with:
         name: test-results
         path: test-results/
-        
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: build-artifacts
-        path: |
-          src/FlexiPane/bin/Release/**
-          src/FlexiPane/obj/Release/**
-        retention-days: 1
 
   pack-and-publish:
     needs: build
     runs-on: windows-latest
-    if: github.event_name == 'push' && (startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main')
+    if: github.event_name == 'push' && (startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
     
     steps:
     - uses: actions/checkout@v4
@@ -100,16 +91,13 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-nuget-
     
-    - name: Download build artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: build-artifacts
-        path: src/FlexiPane/
+    - name: Restore dependencies
+      run: dotnet restore ${{ env.SOLUTION_PATH }}
     
     - name: Pack FlexiPane
       run: |
         Write-Host "Packaging with version: ${{ needs.build.outputs.version }}"
-        dotnet pack src/FlexiPane/FlexiPane.csproj --configuration Release --no-build --output nupkg -p:Version=${{ needs.build.outputs.version }}
+        dotnet pack src/FlexiPane/FlexiPane.csproj --configuration Release --output nupkg -p:Version=${{ needs.build.outputs.version }}
         
         # 생성된 패키지 파일 확인
         if (Test-Path "nupkg/*.nupkg") {
@@ -119,10 +107,46 @@ jobs:
           exit 1
         }
     
+    - name: Check if should publish to NuGet
+      id: should-publish
+      run: |
+        $shouldPublish = $false
+        $reason = "Unknown"
+        
+        # v태그가 있는 경우
+        if ('${{ github.ref }}' -like 'refs/tags/v*') {
+          $shouldPublish = $true
+          $reason = "Tag-based release (v*)"
+        }
+        # 수동 실행인 경우
+        elseif ('${{ github.event_name }}' -eq 'workflow_dispatch') {
+          $shouldPublish = $true
+          $reason = "Manual workflow dispatch"
+        }
+        # Directory.Build.props 파일이 변경된 경우 (main 브랜치)
+        elseif ('${{ github.ref }}' -eq 'refs/heads/main') {
+          # 최근 커밋에서 Directory.Build.props 파일이 변경되었는지 확인
+          $changedFiles = git diff --name-only HEAD~1 HEAD
+          if ($changedFiles -contains 'src/Directory.Build.props') {
+            $shouldPublish = $true
+            $reason = "Directory.Build.props version updated"
+          } else {
+            $shouldPublish = $false
+            $reason = "No version file changes detected"
+          }
+        }
+        
+        Write-Host "Should publish: $shouldPublish"
+        Write-Host "Reason: $reason"
+        
+        echo "should-publish=$($shouldPublish.ToString().ToLower())" >> $env:GITHUB_OUTPUT
+        echo "reason=$reason" >> $env:GITHUB_OUTPUT
+    
     - name: Push to NuGet
-      if: startsWith(github.ref, 'refs/tags/v')
+      if: steps.should-publish.outputs.should-publish == 'true'
       run: |
         Write-Host "🚀 Publishing to NuGet..."
+        Write-Host "Reason: ${{ steps.should-publish.outputs.reason }}"
         
         $packages = Get-ChildItem nupkg/*.nupkg
         if ($packages.Count -eq 0) {
