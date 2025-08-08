@@ -11,7 +11,7 @@ namespace FlexiPane.Controls
     /// Uses WPF Attached Property pattern to inherit state to child elements
     /// </summary>
     [TemplatePart(Name = "PART_RootContent", Type = typeof(ContentPresenter))]
-    public class FlexiPanel : Control
+    public partial class FlexiPanel : Control
     {
         static FlexiPanel()
         {
@@ -176,12 +176,14 @@ namespace FlexiPane.Controls
         {
             if (d is FlexiPanel panel)
             {
+                bool isActive = (bool)e.NewValue;
+                
 #if DEBUG
-                System.Diagnostics.Debug.WriteLine($"[FlexiPanel] Split mode changed: {e.NewValue}");
+                System.Diagnostics.Debug.WriteLine($"[FlexiPanel] Split mode changed: {isActive}");
 #endif
                 
                 // Raise event (cancellable)
-                var args = new SplitModeChangedEventArgs((bool)e.NewValue, (bool)e.OldValue)
+                var args = new SplitModeChangedEventArgs(isActive, (bool)e.OldValue)
                 {
                     RoutedEvent = SplitModeChangedEvent
                 };
@@ -194,8 +196,11 @@ namespace FlexiPane.Controls
                     return;
                 }
                 
+                // Automatically sync ShowCloseButtons with IsSplitModeActive
+                panel.ShowCloseButtons = isActive;
+                
                 // Propagate to Attached Property
-                SetIsSplitModeActive(panel, (bool)e.NewValue);
+                SetIsSplitModeActive(panel, isActive);
                 
                 // Also propagate to RootContent and child elements
                 if (panel.RootContent != null)

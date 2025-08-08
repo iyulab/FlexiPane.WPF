@@ -34,6 +34,34 @@
         Click="SplitHorizontalButton_Click"
         Content="Horizontal Split"
         ToolTip="Split current pane horizontally" />
+      <Separator />
+      <Button
+        x:Name="SaveLayoutButton"
+        Click="SaveLayoutButton_Click"
+        Content="Save Layout"
+        ToolTip="Save current layout to file" />
+      <Button
+        x:Name="LoadLayoutButton"
+        Click="LoadLayoutButton_Click"
+        Content="Load Layout"
+        ToolTip="Load layout from file" />
+      <Button
+        x:Name="ClearLayoutButton"
+        Click="ClearLayoutButton_Click"
+        Content="Clear All"
+        ToolTip="Clear all panes and reset"
+        Background="#FFFFEEEE" />
+      <Separator />
+      <Button
+        x:Name="LoadIDELayoutButton"
+        Click="LoadIDELayoutButton_Click"
+        Content="IDE Layout"
+        ToolTip="Load preset IDE layout" />
+      <Button
+        x:Name="LoadSimpleLayoutButton"
+        Click="LoadSimpleLayoutButton_Click"
+        Content="Simple Layout"
+        ToolTip="Load preset simple layout" />
     </ToolBar>
 
     <!--  Main Content Area  -->

@@ -1,8 +1,20 @@
 # FlexiPane.WPF
 
+[![NuGet Version](https://img.shields.io/nuget/v/FlexiPane.WPF)](https://www.nuget.org/packages/FlexiPane.WPF)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/FlexiPane.WPF)](https://www.nuget.org/packages/FlexiPane.WPF)
+[![.NET Build and NuGet Publish](https://github.com/iyulab/FlexiPane.WPF/actions/workflows/dotnet.yml/badge.svg)](https://github.com/iyulab/FlexiPane.WPF/actions/workflows/dotnet.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 A modern and flexible WPF screen splitting library for dynamic pane management. Create resizable, dockable panels with intuitive split controls and visual feedback.
 
-## Features
+<div align="center">
+  <img src="images/Screenshot1.png" alt="FlexiPane Split Layout" width="49%" />
+  <img src="images/Screenshot2.png" alt="FlexiPane Split Mode" width="49%" />
+  
+  *Left: Multiple panels with complex split layout | Right: Interactive split mode with visual guides*
+</div>
+
+## ✨ Features
 
 - 🎯 **Dynamic Screen Splitting** - Split panels vertically or horizontally at runtime
 - 🎨 **Visual Split Mode** - Interactive split overlay with guide lines and custom content
@@ -10,20 +22,32 @@ A modern and flexible WPF screen splitting library for dynamic pane management. 
 - 🎮 **Programmatic Control** - Built-in methods for splitting selected panels
 - 🎯 **Focus & Selection** - Automatic focus tracking and visual selection indicators
 - 📐 **Flexible Layouts** - Support for complex nested split arrangements
+- 💾 **Layout Persistence** - Save and load complete layouts to XML files
 - 🎨 **Fully Customizable** - XAML templates for complete visual customization
 - ⚡ **High Performance** - Pure WPF implementation with optimized rendering
 - 🔌 **Event-Driven Architecture** - Rich event system for custom behaviors
+- 🎛️ **Content Factory System** - Pluggable content creation for different panel types
+- ⌨️ **Full Keyboard Support** - Complete keyboard navigation and shortcuts
 - 💾 **Zero Configuration** - Works out of the box with sensible defaults
 
-## Quick Start
+## 📦 Installation
 
-### Installation
-
-```xml
-<!-- Coming soon to NuGet -->
+### Package Manager Console
+```powershell
+Install-Package FlexiPane.WPF
 ```
 
-### Basic Usage
+### .NET CLI
+```bash
+dotnet add package FlexiPane.WPF
+```
+
+### PackageReference
+```xml
+<PackageReference Include="FlexiPane.WPF" Version="1.0.0" />
+```
+
+## 🚀 Quick Start
 
 Add the namespace to your XAML:
 
@@ -116,6 +140,21 @@ Users can then:
 - Close panels with the X button
 - Press ESC to exit split mode
 
+### Layout Persistence
+
+Save and load complete layouts:
+
+```csharp
+// Save current layout to file
+flexiPanel.SaveLayoutToFile("my-layout.flexilayout");
+
+// Load layout from file
+flexiPanel.LoadLayoutFromFile("my-layout.flexilayout");
+
+// Clear all panels
+flexiPanel.Clear();
+```
+
 ### Custom Split Guide Content
 
 Provide custom content for the split overlay:
@@ -127,6 +166,19 @@ Provide custom content for the split overlay:
     </flexiPane:FlexiPaneItem.SplitGuideContent>
     <!-- Your content here -->
 </flexiPane:FlexiPaneItem>
+```
+
+### Content Factory System
+
+Register content creators for different panel types:
+
+```csharp
+// Register content creators
+flexiPanel.RegisterContentCreator("editor", (paneInfo) => new TextEditor());
+flexiPanel.RegisterContentCreator("browser", (paneInfo) => new WebBrowser());
+
+// Set default content creator
+flexiPanel.SetDefaultContentCreator((paneInfo) => new DefaultPanel());
 ```
 
 ### Selection and Focus
@@ -141,42 +193,65 @@ var selected = flexiPanel.SelectedItem;
 somePane.IsSelected = true;
 ```
 
-## Requirements
+## 🛠️ Requirements
 
-- .NET 9.0 or later
-- Windows platform
-- WPF application
+- **.NET 9.0** or later
+- **Windows** platform (WPF dependency)
+- **WPF** application project
 
-## Documentation
+## 📚 Documentation
 
 - [Architecture Design](docs/architecture.md) - System architecture and design principles
 - [Splitting Mechanism](docs/splitting-mechanism.md) - Detailed splitting algorithms and tree management
-- [API Design](docs/api-design.md) - Complete API reference (coming soon)
-- [Implementation Guide](docs/implementation-guide.md) - Step-by-step implementation details (coming soon)
 
-## Samples
+## 🎮 Demo Application
 
 Check out the [FlexiPane.Samples.DefaultApp](src/FlexiPane.Samples.DefaultApp) project for a complete working example demonstrating:
-- Basic panel splitting
-- Event handling
-- Custom content provision
-- Split mode toggling
-- Programmatic control
+- ✨ Interactive panel splitting with visual feedback
+- 🎮 Event handling and custom behaviors
+- 🎨 Multiple content types (editor, terminal, explorer)
+- 💾 Layout save/load functionality
+- 🎛️ Content factory system usage
+- ⌨️ Keyboard shortcuts and navigation
+- 🎯 Programmatic control APIs
 
-## Contributing
+To run the demo:
+```bash
+git clone https://github.com/iyulab/FlexiPane.WPF.git
+cd FlexiPane.WPF
+dotnet run --project src/FlexiPane.Samples.DefaultApp/
+```
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+## 🤝 Contributing
 
-## License
+Contributions are welcome! Please feel free to:
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+1. 🐛 **Report bugs** by opening an issue
+2. 💡 **Suggest features** for future versions
+3. 🔧 **Submit pull requests** with improvements
+4. 📖 **Improve documentation** or add examples
+5. ⭐ **Star the repository** if you find it useful!
 
-## Credits
+Please read our [contributing guidelines](CONTRIBUTING.md) before submitting PRs.
 
-Developed by [iyulab](https://github.com/iyulab)
+## 📄 License
 
-Based on proven splitting mechanisms from the FastFinder project, reimagined as a standalone WPF library.
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
 
-## Status
+## ⭐ Credits
 
-🚧 **Early Development** - The library is functional but still under active development. API may change in future versions.
+**Developed by [iyulab](https://github.com/iyulab)**
+
+Built with modern WPF best practices and inspired by proven splitting mechanisms from advanced development environments.
+
+## 🚀 Release Status
+
+✅ **Production Ready** - The library is stable and ready for production use. Semantic versioning is followed for all releases.
+
+### Current Version: v1.0.0
+- ✅ Complete core functionality
+- ✅ Comprehensive event system  
+- ✅ Layout persistence
+- ✅ Full XAML theming support
+- ✅ Demo application with examples
+- ✅ NuGet package available

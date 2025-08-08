@@ -1,0 +1,19 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!--  Common Converters and Resources  -->
+  <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+
+  <!--  Common Colors  -->
+  <SolidColorBrush x:Key="SelectionBorderBrush" Color="#FF007ACC" />
+  <SolidColorBrush x:Key="HoverBorderBrush" Color="#30007ACC" />
+  <SolidColorBrush x:Key="CloseButtonBackground" Color="#CCFF4444" />
+  <SolidColorBrush x:Key="CloseButtonBorder" Color="#FFFF4444" />
+  <SolidColorBrush x:Key="SplitGuideBrush" Color="#AA007ACC" />
+  <SolidColorBrush x:Key="SplitGuideLineBrush" Color="#FFFF0000" />
+
+  <!--  Common Sizes  -->
+  <Thickness x:Key="DefaultBorderThickness">2</Thickness>
+  <CornerRadius x:Key="DefaultCornerRadius">2</CornerRadius>
+  <GridLength x:Key="CloseButtonSize">24</GridLength>
+
+</ResourceDictionary>

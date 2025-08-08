@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
@@ -39,6 +40,7 @@ namespace FlexiPane.Controls
         private Line? _verticalGuideLine;
         private Line? _horizontalGuideLine;
         private Border? _defaultGuidePanel;
+        private bool _currentSplitDirection = true; // true = vertical, false = horizontal
 
         public FlexiPaneItem()
         {
@@ -250,6 +252,10 @@ namespace FlexiPane.Controls
 
             // Set keyboard focus
             this.Focusable = true;
+            
+            // Watch for split mode changes
+            DependencyPropertyDescriptor.FromProperty(FlexiPanel.IsSplitModeActiveProperty, typeof(FlexiPaneItem))
+                ?.AddValueChanged(this, OnSplitModeChanged);
         }
 
         private void ConnectEventHandlers()
@@ -280,6 +286,10 @@ namespace FlexiPane.Controls
             this.KeyDown -= OnKeyDown;
             this.GotFocus -= OnGotFocus;
             this.MouseDown -= OnMouseDown;
+            
+            // Remove split mode change handler
+            DependencyPropertyDescriptor.FromProperty(FlexiPanel.IsSplitModeActiveProperty, typeof(FlexiPaneItem))
+                ?.RemoveValueChanged(this, OnSplitModeChanged);
         }
 
         #endregion
@@ -330,29 +340,42 @@ namespace FlexiPane.Controls
             Debug.WriteLine($"[FlexiPaneItem] Click position: ({position.X:F2}, {position.Y:F2}), Overlay size: {width:F2}x{height:F2}");
 #endif
 
-            bool isVerticalSplit;
+            // Edge area size (same as UpdateGuideLines)
+            const double edgeThreshold = 24;
+
+            // Check if click is in guide areas (edges)
+            bool isLeftEdge = position.X <= edgeThreshold;
+            bool isRightEdge = position.X >= width - edgeThreshold;
+            bool isTopEdge = position.Y <= edgeThreshold;
+            bool isBottomEdge = position.Y >= height - edgeThreshold;
+
+            // Skip split if clicking on edge areas (direction already changed on hover)
+            if (isLeftEdge || isRightEdge || isTopEdge || isBottomEdge)
+            {
+#if DEBUG
+                Debug.WriteLine($"[FlexiPaneItem] Click on edge area - no split performed (direction already set on hover)");
+#endif
+                return; // Don't perform split on edge areas
+            }
+
+            // Center area clicked - perform split using current direction
+            bool isVerticalSplit = _currentSplitDirection;
             double splitRatio;
 
-            // Edge area size (same as UpdateGuideLines)
-            const double edgeThreshold = 50;
-
-            // Determine split direction by edge click
-            if (position.X <= edgeThreshold || position.X >= width - edgeThreshold)
+            if (isVerticalSplit)
             {
-                // Left/right edge: horizontal split (split at horizontal line position)
-                isVerticalSplit = false;
-                splitRatio = position.Y / height;
+                // Vertical split - use X position for ratio
+                splitRatio = position.X / width;
 #if DEBUG
-                Debug.WriteLine($"[FlexiPaneItem] Horizontal split - splitRatio: {splitRatio:F2}");
+                Debug.WriteLine($"[FlexiPaneItem] Performing VERTICAL split - splitRatio: {splitRatio:F2}");
 #endif
             }
             else
             {
-                // Top/bottom or center: vertical split (split at vertical line position)
-                isVerticalSplit = true;
-                splitRatio = position.X / width;
+                // Horizontal split - use Y position for ratio
+                splitRatio = position.Y / height;
 #if DEBUG
-                Debug.WriteLine($"[FlexiPaneItem] Vertical split - splitRatio: {splitRatio:F2}");
+                Debug.WriteLine($"[FlexiPaneItem] Performing HORIZONTAL split - splitRatio: {splitRatio:F2}");
 #endif
             }
 
@@ -375,7 +398,29 @@ namespace FlexiPane.Controls
                 {
                     flexiPanel.IsSplitModeActive = false;
                     e.Handled = true;
+#if DEBUG
+                    Debug.WriteLine($"[FlexiPaneItem] ESC key pressed - Split mode disabled");
+#endif
                 }
+            }
+        }
+        
+        private void OnSplitModeChanged(object? sender, EventArgs e)
+        {
+            var isSplitModeActive = FlexiPanel.GetIsSplitModeActive(this);
+            
+            if (isSplitModeActive && _splitOverlay != null && _splitOverlay.Visibility == Visibility.Visible)
+            {
+                // Reset to default vertical split direction when split mode is activated
+                _currentSplitDirection = true;
+                UpdateSplitModeGuideText();
+                
+                // Set focus when split mode is activated
+                this.Focus();
+                Keyboard.Focus(this);
+#if DEBUG
+                Debug.WriteLine($"[FlexiPaneItem] Split mode activated - Focus set for ESC key handling, direction reset to VERTICAL");
+#endif
             }
         }
 
@@ -385,7 +430,52 @@ namespace FlexiPane.Controls
             
             if (!isSplitModeActive || !CanSplit || _splitOverlay == null) return;
 
-            UpdateGuideLines(e.GetPosition(_splitOverlay));
+            var position = e.GetPosition(_splitOverlay);
+            var width = _splitOverlay.ActualWidth;
+            var height = _splitOverlay.ActualHeight;
+
+            // Edge area size
+            const double edgeThreshold = 24;
+
+            // Check if hovering over guide areas and auto-toggle direction
+            bool isLeftEdge = position.X <= edgeThreshold;
+            bool isRightEdge = position.X >= width - edgeThreshold;
+            bool isTopEdge = position.Y <= edgeThreshold;
+            bool isBottomEdge = position.Y >= height - edgeThreshold;
+
+            bool directionChanged = false;
+
+            if (isLeftEdge || isRightEdge)
+            {
+                // Hovering over left/right edge - set to horizontal split
+                if (_currentSplitDirection != false)
+                {
+                    _currentSplitDirection = false;
+                    directionChanged = true;
+#if DEBUG
+                    Debug.WriteLine($"[FlexiPaneItem] Direction auto-changed to HORIZONTAL (hover on left/right edge)");
+#endif
+                }
+            }
+            else if (isTopEdge || isBottomEdge)
+            {
+                // Hovering over top/bottom edge - set to vertical split
+                if (_currentSplitDirection != true)
+                {
+                    _currentSplitDirection = true;
+                    directionChanged = true;
+#if DEBUG
+                    Debug.WriteLine($"[FlexiPaneItem] Direction auto-changed to VERTICAL (hover on top/bottom edge)");
+#endif
+                }
+            }
+
+            if (directionChanged)
+            {
+                UpdateSplitModeGuideText();
+            }
+
+            UpdateGuideLines(position);
         }
 
         private void OnSplitOverlayMouseLeave(object sender, MouseEventArgs e)
@@ -543,43 +633,62 @@ namespace FlexiPane.Controls
             var height = _splitOverlay.ActualHeight;
 
             // Edge area size
-            const double edgeThreshold = 50;
+            const double edgeThreshold = 24;
             
-            // Determine split direction based on mouse position
-            if (mousePosition.X <= edgeThreshold || mousePosition.X >= width - edgeThreshold)
+            // Check if hovering over guide areas
+            bool isLeftEdge = mousePosition.X <= edgeThreshold;
+            bool isRightEdge = mousePosition.X >= width - edgeThreshold;
+            bool isTopEdge = mousePosition.Y <= edgeThreshold;
+            bool isBottomEdge = mousePosition.Y >= height - edgeThreshold;
+
+            // Always show guide lines based on mouse position
+            // The split direction determines which line type to show
+            if (_currentSplitDirection)
             {
-                // Left/right edge: horizontal split (show vertical line)
-                ShowVerticalGuideLine(mousePosition.Y, height);
+                // Vertical split mode - show vertical line at mouse X
+                ShowVerticalGuideLine(mousePosition.X, width, 0.8);
                 HideHorizontalGuideLine();
             }
             else
             {
-                // Top/bottom or center: vertical split (show horizontal line)
-                ShowHorizontalGuideLine(mousePosition.X, width);
+                // Horizontal split mode - show horizontal line at mouse Y
+                ShowHorizontalGuideLine(mousePosition.Y, height, 0.8);
                 HideVerticalGuideLine();
+            }
+
+            // Visual feedback: make lines slightly dimmer when over toggle areas
+            if (isLeftEdge || isRightEdge || isTopEdge || isBottomEdge)
+            {
+                // Dim the lines slightly to indicate toggle area
+                if (_verticalGuideLine != null && _verticalGuideLine.Opacity > 0)
+                    _verticalGuideLine.Opacity = 0.4;
+                if (_horizontalGuideLine != null && _horizontalGuideLine.Opacity > 0)
+                    _horizontalGuideLine.Opacity = 0.4;
             }
         }
 
-        private void ShowVerticalGuideLine(double y, double height)
+        private void ShowVerticalGuideLine(double x, double width, double opacity = 0.8)
         {
             if (_verticalGuideLine == null) return;
 
-            _verticalGuideLine.X1 = 0;
-            _verticalGuideLine.Y1 = y;
-            _verticalGuideLine.X2 = _splitOverlay?.ActualWidth ?? 0;
-            _verticalGuideLine.Y2 = y;
-            _verticalGuideLine.Opacity = 0.8;
+            // Vertical line - runs from top to bottom at position X
+            _verticalGuideLine.X1 = x;
+            _verticalGuideLine.Y1 = 0;
+            _verticalGuideLine.X2 = x;
+            _verticalGuideLine.Y2 = _splitOverlay?.ActualHeight ?? 0;
+            _verticalGuideLine.Opacity = opacity;
         }
 
-        private void ShowHorizontalGuideLine(double x, double width)
+        private void ShowHorizontalGuideLine(double y, double height, double opacity = 0.8)
         {
             if (_horizontalGuideLine == null) return;
 
-            _horizontalGuideLine.X1 = x;
-            _horizontalGuideLine.Y1 = 0;
-            _horizontalGuideLine.X2 = x;
-            _horizontalGuideLine.Y2 = _splitOverlay?.ActualHeight ?? 0;
-            _horizontalGuideLine.Opacity = 0.8;
+            // Horizontal line - runs from left to right at position Y
+            _horizontalGuideLine.X1 = 0;
+            _horizontalGuideLine.Y1 = y;
+            _horizontalGuideLine.X2 = _splitOverlay?.ActualWidth ?? 0;
+            _horizontalGuideLine.Y2 = y;
+            _horizontalGuideLine.Opacity = opacity;
         }
 
         private void HideGuideLines()
@@ -598,6 +707,39 @@ namespace FlexiPane.Controls
         {
             if (_horizontalGuideLine != null)
                 _horizontalGuideLine.Opacity = 0;
+        }
+
+        private void UpdateSplitModeGuideText()
+        {
+            // Update the guide panel text to reflect current split direction
+            if (_defaultGuidePanel != null && _defaultGuidePanel.Child is StackPanel stack)
+            {
+                // Find and update the direction indicator text blocks
+                foreach (var child in stack.Children)
+                {
+                    if (child is TextBlock textBlock)
+                    {
+                        if (_currentSplitDirection)
+                        {
+                            // Vertical split mode
+                            if (textBlock.Text.Contains("Current:"))
+                            {
+                                textBlock.Text = "Current: VERTICAL SPLIT (|)";
+                                textBlock.Foreground = new SolidColorBrush(Color.FromRgb(0, 122, 204));
+                            }
+                        }
+                        else
+                        {
+                            // Horizontal split mode  
+                            if (textBlock.Text.Contains("Current:"))
+                            {
+                                textBlock.Text = "Current: HORIZONTAL SPLIT (—)";
+                                textBlock.Foreground = new SolidColorBrush(Color.FromRgb(0, 122, 204));
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         #endregion

@@ -1,22 +1,28 @@
 <Project>
   <PropertyGroup>
     <LangVersion>preview</LangVersion>
-    <ImplicitUsings>disable</ImplicitUsings>
+    <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    
+    <!-- 패키지 정보 -->
+    <Title>FlexiPane.WPF</Title>
     <Version>1.0.0</Version>
-    <Authors>iyulab</Authors>
-    <PackageIcon>logo.png</PackageIcon>
-    <RepositoryUrl>https://github.com/iyulab/FlexiPane.WPF</RepositoryUrl>
-    <PackageProjectUrl>https://github.com/iyulab/FlexiPane.WPF</PackageProjectUrl>
-    <PackageIconUrl>https://raw.githubusercontent.com/iyulab-rnd/public/main/images/iyulab_128.png</PackageIconUrl>
-    <PackageTags>wpf;split-panel;pane;layout;docking;window-management;ui-controls;screen-splitter;dynamic-layout;flexipane</PackageTags>
     <Description>A modern and flexible WPF screen splitting library for dynamic pane management. Create resizable, dockable panels with intuitive split controls and visual feedback.</Description>
-    <Title>FlexiPane.WPF</Title>    
+    <PackageTags>wpf;split-panel;pane;layout;docking;window-management;ui-controls;screen-splitter;dynamic-layout;flexipane</PackageTags>
+    <PackageProjectUrl>https://github.com/iyulab/FlexiPane.WPF</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/iyulab/FlexiPane.WPF</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageIcon>logo.png</PackageIcon>
+    
+    <!-- 작성자 정보 -->
+    <Authors>iyulab</Authors>
+    <Copyright>Copyright (c) Iyulab Corporation 2025.</Copyright>
   </PropertyGroup>
+  
   <ItemGroup>
-    <None Include="../logo.png" Pack="true" PackagePath="" />
     <None Include="../../README.md" Pack="true" PackagePath="\" />
+    <None Include="../logo.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 </Project>

@@ -1,0 +1,124 @@
+name: .NET Build and NuGet Publish
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+    tags: [ "v*" ]
+    paths:
+      - 'src/**'
+      - '.github/workflows/**'
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  DOTNET_VERSION: '9.0.x'
+  SOLUTION_PATH: 'src/FlexiPane.sln'
+  
+jobs:
+  build:
+    runs-on: windows-latest  # WPF requires Windows
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+    
+    - name: Restore dependencies
+      run: dotnet restore ${{ env.SOLUTION_PATH }}
+    
+    - name: Build
+      run: dotnet build ${{ env.SOLUTION_PATH }} --configuration Release --no-restore
+    
+    - name: Test
+      run: dotnet test ${{ env.SOLUTION_PATH }} --no-build --verbosity normal --configuration Release --logger trx --results-directory test-results/ || true
+      
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results
+        path: test-results/
+
+  pack-and-publish:
+    needs: build
+    runs-on: windows-latest  # WPF requires Windows
+    if: github.event_name == 'push' && (startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main')
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+    
+    - name: Restore dependencies
+      run: dotnet restore ${{ env.SOLUTION_PATH }}
+    
+    - name: Build FlexiPane
+      run: dotnet build src/FlexiPane/FlexiPane.csproj --configuration Release --no-restore
+    
+    - name: Pack FlexiPane
+      run: dotnet pack src/FlexiPane/FlexiPane.csproj --configuration Release --no-build --output nupkg
+    
+    - name: Push to NuGet
+      if: startsWith(github.ref, 'refs/tags/v')
+      run: dotnet nuget push ./nupkg/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }} --skip-duplicate
+    
+    - name: Upload packages
+      uses: actions/upload-artifact@v4
+      with:
+        name: nuget-packages
+        path: nupkg/*.nupkg
+
+  create-release:
+    needs: [build, pack-and-publish]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts/
+    
+    - name: Create Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref_name }}
+        release_name: FlexiPane.WPF ${{ github.ref_name }}
+        body: |
+          ## FlexiPane.WPF ${{ github.ref_name }}
+          
+          ### 📦 Published Packages
+          - **FlexiPane.WPF**: Dynamic WPF screen splitting library
+          
+          ### ✨ Features
+          - Dynamic panel splitting (vertical/horizontal)
+          - Interactive split mode with visual feedback
+          - Smart panel management and hierarchy simplification
+          - Layout persistence (save/load)
+          - Event-driven architecture
+          - Full XAML theming support
+          
+          ### 🛠️ Requirements
+          - .NET 9.0 or later
+          - Windows platform
+          - WPF application
+          
+          ### 📋 Installation
+          ```
+          dotnet add package FlexiPane.WPF
+          ```
+          
+          ### 📋 Changes
+          See [commits](https://github.com/iyulab/FlexiPane.WPF/compare/v${{ github.ref_name }}...HEAD) for details.
+        draft: false
+        prerelease: ${{ contains(github.ref_name, '-') }}

@@ -706,9 +706,9 @@ namespace FlexiPane.Managers
                     Debug.WriteLine($"[FlexiPaneManager] Replacing in FlexiPaneContainer");
 #endif
                     if (container.FirstChild == oldChild)
-                        container.FirstChild = newChild as UIElement;
+                        container.FirstChild = (newChild as UIElement) ?? newChild;
                     else if (container.SecondChild == oldChild)
-                        container.SecondChild = newChild as UIElement;
+                        container.SecondChild = (newChild as UIElement) ?? newChild;
                     break;
                     
                 case FlexiPanel panel:
@@ -817,9 +817,9 @@ namespace FlexiPane.Managers
 #endif
                     // Add to first empty slot
                     if (container.FirstChild == null)
-                        container.FirstChild = child as UIElement;
+                        container.FirstChild = (child as UIElement) ?? child;
                     else if (container.SecondChild == null)
-                        container.SecondChild = child as UIElement;
+                        container.SecondChild = (child as UIElement) ?? child;
                     break;
                 default:
 #if DEBUG
