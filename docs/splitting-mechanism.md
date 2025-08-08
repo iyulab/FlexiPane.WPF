@@ -1,50 +1,50 @@
-# FlexiPane 화면분할 메커니즘 설계
+# FlexiPane Screen Splitting Mechanism Design
 
-## 개요
+## Overview
 
-FlexiPane.WPF의 동적 화면분할 시스템에 대한 트리 구조 기반 설계 문서입니다. 이 시스템은 FlexiPanel을 최상위 컨테이너로 하여 FlexiPaneContainer와 FlexiPaneItem 간의 계층적 구조를 통해 런타임에 UI 영역을 동적으로 분할하고 병합합니다.
+This document describes the tree structure-based design for FlexiPane.WPF's dynamic screen splitting system. The system uses FlexiPanel as the top-level container and dynamically splits and merges UI areas at runtime through a hierarchical structure between FlexiPaneContainer and FlexiPaneItem.
 
-## 컨트롤 계층 구조
+## Control Hierarchy
 
-### 기본 구조
+### Basic Structure
 ```
-FlexiPanel (최상위 컨테이너)
+FlexiPanel (Top-level container)
 └── RootContent: UIElement
-    ├── FlexiPaneItem (단일 패널)
-    └── FlexiPaneContainer (분할 컨테이너)
+    ├── FlexiPaneItem (Single panel)
+    └── FlexiPaneContainer (Split container)
         ├── FirstChild: UIElement
         └── SecondChild: UIElement
 ```
 
-### 역할 정의
-- **FlexiPanel**: 전역 상태 관리 및 Attached Property 제공
-- **FlexiPaneContainer**: 분할된 영역을 관리하는 컨테이너 (Grid 기반)
-- **FlexiPaneItem**: 실제 콘텐츠를 담는 개별 패널
+### Role Definitions
+- **FlexiPanel**: Global state management and Attached Property provider
+- **FlexiPaneContainer**: Container managing split areas (Grid-based)
+- **FlexiPaneItem**: Individual panel containing actual content
 
-## 트리 구조 변화 패턴
+## Tree Structure Transformation Patterns
 
-### 시나리오 1: 기본 분할 (1영역 → 2영역)
+### Scenario 1: Basic Split (1 area → 2 areas)
 
-#### 초기 상태
+#### Initial State
 ```
 FlexiPanel
 └── RootContent: FlexiPaneItem(A)
     └── Content: UserContentA
 ```
 
-#### 분할 후 구조
+#### After Split
 ```
 FlexiPanel
 └── RootContent: FlexiPaneContainer(Root)
     ├── FirstChild: FlexiPaneItem(A)
-    │   └── Content: UserContentA (기존)
+    │   └── Content: UserContentA (existing)
     └── SecondChild: FlexiPaneItem(B)
-        └── Content: UserContentB (새로 생성)
+        └── Content: UserContentB (newly created)
 ```
 
-### 시나리오 2: 중첩 분할 (2영역 → 3영역)
+### Scenario 2: Nested Split (2 areas → 3 areas)
 
-#### 분할 전 (2영역)
+#### Before Split (2 areas)
 ```
 FlexiPanel
 └── RootContent: FlexiPaneContainer(Root)
@@ -54,7 +54,7 @@ FlexiPanel
         └── Content: UserContentB
 ```
 
-#### B 영역 분할 후 (3영역)
+#### After Splitting Area B (3 areas)
 ```
 FlexiPanel
 └── RootContent: FlexiPaneContainer(Root)
@@ -62,22 +62,22 @@ FlexiPanel
     │   └── Content: UserContentA
     └── SecondChild: FlexiPaneContainer(Nested)
         ├── FirstChild: FlexiPaneItem(B)
-        │   └── Content: UserContentB (기존)
+        │   └── Content: UserContentB (existing)
         └── SecondChild: FlexiPaneItem(C)
-            └── Content: UserContentC (새로 생성)
+            └── Content: UserContentC (newly created)
 ```
 
-### 시나리오 3: 복잡한 중첩 (3영역 → 4영역)
+### Scenario 3: Complex Nesting (3 areas → 4 areas)
 
-#### A 영역 분할 후 (4영역)
+#### After Splitting Area A (4 areas)
 ```
 FlexiPanel
 └── RootContent: FlexiPaneContainer(Root)
     ├── FirstChild: FlexiPaneContainer(NestedLeft)
     │   ├── FirstChild: FlexiPaneItem(A1)
-    │   │   └── Content: UserContentA1 (기존 A에서 분할)
+    │   │   └── Content: UserContentA1 (split from A)
     │   └── SecondChild: FlexiPaneItem(A2)
-    │       └── Content: UserContentA2 (새로 생성)
+    │       └── Content: UserContentA2 (newly created)
     └── SecondChild: FlexiPaneContainer(NestedRight)
         ├── FirstChild: FlexiPaneItem(B)
         │   └── Content: UserContentB
@@ -85,11 +85,11 @@ FlexiPanel
             └── Content: UserContentC
 ```
 
-## 영역 제거 패턴
+## Area Removal Patterns
 
-### 시나리오 4: 리프 패널 제거 (3영역 → 2영역)
+### Scenario 4: Leaf Panel Removal (3 areas → 2 areas)
 
-#### 제거 전 (3영역)
+#### Before Removal (3 areas)
 ```
 FlexiPanel
 └── RootContent: FlexiPaneContainer(Root)
@@ -98,41 +98,41 @@ FlexiPanel
     └── SecondChild: FlexiPaneContainer(Nested)
         ├── FirstChild: FlexiPaneItem(B)
         │   └── Content: UserContentB
-        └── SecondChild: FlexiPaneItem(C) ← 제거 대상
+        └── SecondChild: FlexiPaneItem(C) ← To be removed
             └── Content: UserContentC
 ```
 
-#### C 패널 제거 후 (2영역) - 올바른 동작
+#### After Removing Panel C (2 areas) - Correct Behavior
 ```
 FlexiPanel
 └── RootContent: FlexiPaneContainer(Root)
     ├── FirstChild: FlexiPaneItem(A)
     │   └── Content: UserContentA
-    └── SecondChild: FlexiPaneItem(B) ← Nested 컨테이너가 제거되고 B가 승격
+    └── SecondChild: FlexiPaneItem(B) ← Nested container removed, B promoted
         └── Content: UserContentB
 ```
 
-**핵심 규칙**: 컨테이너의 자식이 하나만 남으면 해당 자식을 부모 컨테이너로 승격
+**Core Rule**: When a container has only one child remaining, promote that child to the parent container
 
-### 시나리오 5: 중간 컨테이너 정리 (4영역 → 3영역)
+### Scenario 5: Intermediate Container Cleanup (4 areas → 3 areas)
 
-#### 제거 전 (4영역)
+#### Before Removal (4 areas)
 ```
 FlexiPanel
 └── RootContent: FlexiPaneContainer(Root)
     ├── FirstChild: FlexiPaneContainer(NestedLeft)
     │   ├── FirstChild: FlexiPaneItem(A1)
-    │   └── SecondChild: FlexiPaneItem(A2) ← 제거 대상
+    │   └── SecondChild: FlexiPaneItem(A2) ← To be removed
     └── SecondChild: FlexiPaneContainer(NestedRight)
         ├── FirstChild: FlexiPaneItem(B)
         └── SecondChild: FlexiPaneItem(C)
 ```
 
-#### A2 패널 제거 후 (3영역)
+#### After Removing Panel A2 (3 areas)
 ```
 FlexiPanel
 └── RootContent: FlexiPaneContainer(Root)
-    ├── FirstChild: FlexiPaneItem(A1) ← NestedLeft 제거, A1 승격
+    ├── FirstChild: FlexiPaneItem(A1) ← NestedLeft removed, A1 promoted
     │   └── Content: UserContentA1
     └── SecondChild: FlexiPaneContainer(NestedRight)
         ├── FirstChild: FlexiPaneItem(B)
@@ -141,126 +141,126 @@ FlexiPanel
             └── Content: UserContentC
 ```
 
-### 시나리오 6: 최종 단순화 (2영역 → 1영역)
+### Scenario 6: Final Simplification (2 areas → 1 area)
 
-#### 제거 전 (2영역)
+#### Before Removal (2 areas)
 ```
 FlexiPanel
 └── RootContent: FlexiPaneContainer(Root)
     ├── FirstChild: FlexiPaneItem(A)
     │   └── Content: UserContentA
-    └── SecondChild: FlexiPaneItem(B) ← 제거 대상
+    └── SecondChild: FlexiPaneItem(B) ← To be removed
         └── Content: UserContentB
 ```
 
-#### B 패널 제거 후 (1영역)
+#### After Removing Panel B (1 area)
 ```
 FlexiPanel
-└── RootContent: FlexiPaneItem(A) ← Root 컨테이너 제거, A 직접 승격
+└── RootContent: FlexiPaneItem(A) ← Root container removed, A directly promoted
     └── Content: UserContentA
 ```
 
-## 영역 제거 알고리즘 설계
+## Area Removal Algorithm Design
 
-### 1단계: 대상 확인
+### Step 1: Target Identification
 ```
-제거할 FlexiPaneItem → 직접 부모 FlexiPaneContainer 찾기
+Find FlexiPaneItem to remove → Find direct parent FlexiPaneContainer
 ```
 
-### 2단계: 형제 요소 결정
+### Step 2: Determine Sibling Element
 ```
 FlexiPaneContainer
-├── FirstChild: FlexiPaneItem(제거대상) → 형제는 SecondChild
-└── SecondChild: FlexiPaneItem(형제)
+├── FirstChild: FlexiPaneItem(target) → sibling is SecondChild
+└── SecondChild: FlexiPaneItem(sibling)
 
-또는
+or
 
 FlexiPaneContainer
-├── FirstChild: FlexiPaneItem(형제)
-└── SecondChild: FlexiPaneItem(제거대상) → 형제는 FirstChild
+├── FirstChild: FlexiPaneItem(sibling)
+└── SecondChild: FlexiPaneItem(target) → sibling is FirstChild
 ```
 
-### 3단계: 부모의 부모(GrandParent) 확인
+### Step 3: Check Parent's Parent (GrandParent)
 ```
-GrandParent (FlexiPaneContainer 또는 FlexiPanel)
-└── Child: FlexiPaneContainer(부모)
-    ├── FirstChild: FlexiPaneItem(제거대상)
-    └── SecondChild: FlexiPaneItem(형제) → 이 형제를 GrandParent로 승격
-```
-
-### 4단계: 구조 변경 실행
-1. **형제 요소를 부모 컨테이너에서 분리**
-2. **GrandParent에서 부모 컨테이너를 형제 요소로 교체**
-3. **부모 컨테이너와 제거 대상 정리**
-
-### 5단계: 빈 컨테이너 정리
-- 빈 FlexiPaneContainer 제거
-- 불필요한 중간 계층 정리
-- 단일 자식만 있는 컨테이너의 구조 단순화
-
-## 특수 케이스 처리
-
-### RootContent 처리
-```
-FlexiPanel.RootContent가 FlexiPaneContainer인 경우:
-- 자식이 하나만 남으면 해당 자식을 RootContent로 직접 설정
-- FlexiPaneItem이면 단일 패널 상태로 복원
-- FlexiPaneContainer이면 계층 구조 유지
+GrandParent (FlexiPaneContainer or FlexiPanel)
+└── Child: FlexiPaneContainer(parent)
+    ├── FirstChild: FlexiPaneItem(target)
+    └── SecondChild: FlexiPaneItem(sibling) → Promote this sibling to GrandParent
 ```
 
-### 빈 컨테이너 식별
+### Step 4: Execute Structure Change
+1. **Detach sibling element from parent container**
+2. **Replace parent container with sibling element in GrandParent**
+3. **Clean up parent container and removal target**
+
+### Step 5: Empty Container Cleanup
+- Remove empty FlexiPaneContainer
+- Clean up unnecessary intermediate layers
+- Simplify structure of containers with single child
+
+## Special Case Handling
+
+### RootContent Handling
 ```
-FlexiPaneContainer가 빈 상태:
+When FlexiPanel.RootContent is FlexiPaneContainer:
+- If only one child remains, set that child directly as RootContent
+- If FlexiPaneItem, restore to single panel state
+- If FlexiPaneContainer, maintain hierarchical structure
+```
+
+### Empty Container Identification
+```
+FlexiPaneContainer is empty when:
 - FirstChild == null && SecondChild == null
 
-처리 방법:
-- 부모에서 제거
-- 리소스 정리
+Handling:
+- Remove from parent
+- Clean up resources
 ```
 
-### 단일 자식 컨테이너 승격
+### Single Child Container Promotion
 ```
-FlexiPaneContainer에 자식이 하나만 있는 경우:
-- (FirstChild != null && SecondChild == null) 또는
+When FlexiPaneContainer has only one child:
+- (FirstChild != null && SecondChild == null) or
 - (FirstChild == null && SecondChild != null)
 
-처리 방법:
-- 유일한 자식을 부모 레벨로 승격
-- 현재 컨테이너 제거
+Handling:
+- Promote the only child to parent level
+- Remove current container
 ```
 
-## 분할 방향 및 속성
+## Split Direction and Properties
 
-### 분할 방향
-- **IsVerticalSplit = true**: 세로 분할 (좌우)
-- **IsVerticalSplit = false**: 가로 분할 (상하)
+### Split Direction
+- **IsVerticalSplit = true**: Vertical split (left-right)
+- **IsVerticalSplit = false**: Horizontal split (top-bottom)
 
-### 분할 비율
-- **SplitRatio**: 0.1 ~ 0.9 범위의 첫 번째 자식 크기 비율
+### Split Ratio
+- **SplitRatio**: First child size ratio in range 0.1 ~ 0.9
 
-### 계층별 분할 정보
+### Hierarchical Split Information
 ```
 FlexiPaneContainer(Root, Vertical, 0.6)
-├── FirstChild: FlexiPaneItem(A) [60% 너비]
+├── FirstChild: FlexiPaneItem(A) [60% width]
 └── SecondChild: FlexiPaneContainer(Nested, Horizontal, 0.4)
-    ├── FirstChild: FlexiPaneItem(B) [40% 높이]
-    └── SecondChild: FlexiPaneItem(C) [60% 높이]
+    ├── FirstChild: FlexiPaneItem(B) [40% height]
+    └── SecondChild: FlexiPaneItem(C) [60% height]
 ```
 
-## 구현 시 고려사항
+## Implementation Considerations
 
-### 이벤트 전파
-- FlexiPaneItem → FlexiPanel 로 Routed Event 버블링
-- Attached Property를 통한 상태 상속
+### Event Propagation
+- FlexiPaneItem → FlexiPanel Routed Event bubbling
+- State inheritance through Attached Properties
 
-### 리소스 관리
-- 제거된 FlexiPaneItem의 이벤트 핸들러 해제
-- 빈 FlexiPaneContainer의 메모리 정리
-- Visual Tree와 Logical Tree 동기화
+### Resource Management
+- Disconnect event handlers of removed FlexiPaneItem
+- Memory cleanup of empty FlexiPaneContainer
+- Visual Tree and Logical Tree synchronization
 
-### 검증 로직
-- 최소 1개 패널 유지 (마지막 패널 제거 방지)
-- 부모-자식 관계 무결성 검증
-- 순환 참조 방지
+### Validation Logic
+- Maintain minimum 1 panel (prevent last panel removal)
+- Parent-child relationship integrity validation
+- Circular reference prevention
 
-이 설계를 기반으로 구조 변화가 예측 가능하고 일관성 있게 이루어져야 합니다.
+Based on this design, structural changes should be predictable and consistent.

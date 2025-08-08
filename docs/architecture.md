@@ -1,125 +1,197 @@
-# FlexiPane.WPF 아키텍처 설계
+# FlexiPane.WPF Architecture Design
 
-## 개요
+## Overview
 
-FlexiPane.WPF는 WPF 애플리케이션에서 동적 화면 분할 기능을 제공하는 범용 라이브러리입니다. FastFinder 프로젝트에서 검증된 분할 메커니즘을 기반으로 설계되었으며, 순수 WPF 구현으로 높은 호환성과 성능을 제공합니다.
+FlexiPane.WPF is a versatile library that provides dynamic screen splitting functionality for WPF applications. Designed based on proven splitting mechanisms from the FastFinder project, it offers high compatibility and performance with pure WPF implementation.
 
-## 핵심 컴포넌트
+## Core Components
 
-### FlexiPaneContainer
-분할 컨테이너의 최상위 컴포넌트로, 2개의 자식 요소를 관리합니다.
+### FlexiPanel
+The root container that hosts and manages the entire pane structure.
 
-**주요 기능:**
-- 첫 번째 자식 (왼쪽 또는 상단) 관리
-- 두 번째 자식 (오른쪽 또는 하단) 관리  
-- 분할 방향 제어 (수직/수평)
-- 분할 비율 조정 (0.0 ~ 1.0)
-- GridSplitter를 통한 실시간 크기 조정
+**Key Features:**
+- Root content management
+- Split mode activation control
+- Event routing and bubbling
+- Selected item tracking
+- Programmatic split methods
 
 ### FlexiPaneItem
-실제 콘텐츠를 담는 분할 가능한 패널입니다.
+A splittable panel that contains actual user content.
 
-**주요 기능:**
-- 사용자 콘텐츠 호스팅
-- 고유 식별자 관리
-- 제목/헤더 표시
-- 닫기 기능 제어
-- 분할 가능 여부 설정
-- 이벤트 기반 상호작용
+**Key Features:**
+- User content hosting
+- Unique identifier management
+- Title/header display
+- Close functionality control
+- Split capability settings
+- Selection state management
+- Focus handling
+- Event-based interaction
+
+### FlexiPaneContainer
+A split container that holds two children with GridSplitter.
+
+**Key Features:**
+- First child (left or top) management
+- Second child (right or bottom) management
+- Split direction control (vertical/horizontal)
+- Split ratio adjustment (0.1 ~ 0.9)
+- Real-time resize via GridSplitter
+- Automatic layout management
 
 ### FlexiPaneManager
-분할 및 제거 로직을 처리하는 정적 매니저 클래스입니다.
+Static manager class that handles splitting and removal logic.
 
-**주요 기능:**
-- 패널 분할 처리
-- 패널 제거 관리
-- 레이아웃 직렬화/역직렬화
-- 트리 구조 재편성
+**Key Features:**
+- Panel split processing
+- Panel removal management
+- Structure simplification
+- Tree structure reorganization
+- Parent-child relationship management
 
-## 이벤트 시스템
+## Event System
 
-### 핵심 이벤트
+### Core Events
 
-**PaneSplitEventArgs**
-- 분할 요청 시 발생하는 이벤트 데이터
-- 소스 패널, 분할 방향, 비율 정보 포함
-- 취소 가능한 이벤트
+**PaneSplitRequestedEventArgs**
+- Event data raised when split is requested
+- Contains source panel, split direction, ratio information
+- Cancelable event with custom content support
 
 **PaneClosingEventArgs**
-- 패널 닫기 요청 시 발생하는 이벤트 데이터
-- 대상 패널과 닫기 사유 정보 포함
-- 취소 가능한 이벤트
+- Event data raised when panel close is requested
+- Contains target panel and close reason information
+- Cancelable event for validation
 
-## 테마 시스템
+**PaneClosedEventArgs**
+- Event data raised after panel is closed
+- Non-cancelable completion event
 
-### FlexiPaneTheme
-라이브러리의 시각적 테마를 관리하는 시스템입니다.
+**LastPaneClosingEventArgs**
+- Event data raised when closing the last remaining panel
+- Cancelable with default behavior configuration
 
-**테마 요소:**
-- Splitter 브러시 및 두께
-- 패널 기본 스타일
-- 분할 가이드 템플릿
-- 오버레이 브러시
-- 가이드라인 브러시
+**NewPaneCreatedEventArgs**
+- Event data raised when new panel is created
+- Contains new panel and source panel references
 
-## 설계 원칙
+## Visual System
 
-### 1. 순수 WPF 구현
-- 외부 의존성 없는 순수 WPF 구현
-- .NET 9.0 기반, 하위 호환성 고려
-- 하드웨어 가속 렌더링 활용
+### Themes and Styling
+The library uses WPF's theme system for visual customization.
 
-### 2. MVVM 친화적
-- 데이터 바인딩 우선 API 설계
-- Command 패턴 지원
-- 의존성 속성 기반 구현
+**Theme Elements:**
+- Default control templates in Generic.xaml
+- Selection border visualization
+- Split mode overlay with guide content
+- GridSplitter styling
+- Close button appearance
+- Visual state management
 
-### 3. 확장성
-- 플러그인 가능한 테마 시스템
-- 커스텀 콘텐츠 지원
-- 이벤트 기반 확장 포인트
+### Split Mode UI
+Interactive split mode with visual feedback:
+- Semi-transparent overlay
+- Guide lines showing split preview
+- Custom guide content support
+- Responsive mouse tracking
+- Edge detection for split direction
 
-### 4. 성능 최적화
-- 스마트 리소스 관리
-- IDisposable 패턴 구현
-- 최적화된 렌더링
+## Design Principles
 
-### 5. 접근성
-- 키보드 탐색 지원
-- 스크린 리더 호환성
-- 고대비 테마 지원
+### 1. Pure WPF Implementation
+- No external dependencies, pure WPF implementation
+- .NET 9.0 based with backward compatibility considerations
+- Hardware-accelerated rendering utilization
 
-## 사용 시나리오
+### 2. MVVM Friendly
+- Data binding first API design
+- Command pattern support
+- Dependency property based implementation
+- INotifyPropertyChanged integration
 
-### 기본 사용법
-XAML에서 FlexiPaneHost 컨트롤 내부에 FlexiPaneItem을 배치하여 기본적인 분할 가능한 영역을 생성합니다.
+### 3. Extensibility
+- Event-based extension points
+- Custom content support
+- Template-based customization
+- Pluggable behavior system
 
-### 프로그래매틱 분할
-FlexiPaneManager를 통해 코드에서 직접 패널을 분할하거나 제거할 수 있습니다.
+### 4. Performance Optimization
+- Smart resource management
+- IDisposable pattern implementation
+- Optimized rendering paths
+- Efficient tree traversal algorithms
 
-### 레이아웃 저장/복원
-JSON 형태로 현재 레이아웃을 저장하고, 애플리케이션 재시작 시 복원할 수 있습니다.
+### 5. Accessibility
+- Keyboard navigation support (ESC key handling)
+- Focus management
+- Selection state visualization
+- Screen reader compatibility ready
 
-## 차별화 요소
+## Usage Scenarios
 
-### 1. 경량성
-- 최소한의 오버헤드
-- 핵심 기능에 집중
-- 빠른 로딩과 실행
+### Basic Usage
+Simply place a FlexiPanel control in XAML with minimal configuration:
+```xml
+<flexiPane:FlexiPanel />
+```
 
-### 2. 직관적 UI
-- 시각적 분할 가이드
-- 부드러운 애니메이션
-- 사용자 친화적 인터페이스
+### Programmatic Splitting
+Use built-in methods to split the selected pane:
+```csharp
+flexiPanel.SplitSelectedVertically(0.5, customContent);
+flexiPanel.SplitSelectedHorizontally(0.5, customContent);
+```
 
-### 3. 완전한 커스터마이징
-- XAML 기반 테마 시스템
-- 모든 UI 요소 재정의 가능
-- 브랜드 일치 디자인 지원
+### Event-Driven Customization
+Handle events to customize split behavior and content:
+- PaneSplitRequested - Provide custom content for new panes
+- PaneClosing - Validate close operations
+- LastPaneClosing - Handle last panel scenarios
+- NewPaneCreated - Initialize new panels
 
-### 4. 견고한 아키텍처
-- 검증된 분할 알고리즘
-- 메모리 누수 방지
-- 예외 안전성 보장
+## Architecture Patterns
 
-이 설계는 WPF 생태계에서 최고 수준의 화면 분할 솔루션을 제공하며, 개발자들이 쉽게 채택하고 확장할 수 있는 구조를 가지고 있습니다.
+### Tree Structure Management
+- Binary tree structure with FlexiPaneContainer nodes
+- Leaf nodes are FlexiPaneItem instances
+- Automatic structure simplification when nodes are removed
+- Parent reference tracking for efficient traversal
+
+### Event Routing Strategy
+- Routed events bubble from FlexiPaneItem to FlexiPanel
+- Dispatcher-based delayed processing for custom handlers
+- Centralized event handling in FlexiPanel
+- Manager delegation for actual operations
+
+### Resource Lifecycle
+- Proper cleanup in Dispose methods
+- Event handler disconnection on unload
+- Visual tree aware operations
+- Memory leak prevention through weak references
+
+## Differentiation Factors
+
+### 1. Simplicity
+- Minimal configuration required
+- Sensible defaults for immediate use
+- Clean and intuitive API
+
+### 2. Flexibility
+- Full XAML template customization
+- Event-driven architecture
+- Multiple extension points
+
+### 3. Robustness
+- Proven splitting algorithms
+- Memory leak prevention
+- Exception safety guarantees
+- Comprehensive null safety
+
+### 4. Modern Design
+- .NET 9.0 latest features
+- Nullable reference types
+- Modern C# patterns
+- Clean code principles
+
+This architecture provides a best-in-class screen splitting solution in the WPF ecosystem, with a structure that developers can easily adopt and extend.

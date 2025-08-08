@@ -9,18 +9,18 @@ using FlexiPane.Events;
 namespace FlexiPane.Managers
 {
     /// <summary>
-    /// FlexiPane 분할 및 관리 로직을 담당하는 정적 클래스
+    /// Static class responsible for FlexiPane splitting and management logic
     /// </summary>
     public static class FlexiPaneManager
     {
         /// <summary>
-        /// FlexiPaneItem을 분할하여 새로운 FlexiPaneContainer로 변환
+        /// Split FlexiPaneItem to convert it into a new FlexiPaneContainer
         /// </summary>
-        /// <param name="sourcePane">분할될 원본 패널</param>
-        /// <param name="isVerticalSplit">true: 세로 분할 (위/아래), false: 가로 분할 (좌/우)</param>
-        /// <param name="splitRatio">분할 비율 (0.1 ~ 0.9)</param>
-        /// <param name="newContent">새 패널에 들어갈 콘텐츠</param>
-        /// <returns>생성된 FlexiPaneContainer 또는 실패시 null</returns>
+        /// <param name="sourcePane">Original panel to be split</param>
+        /// <param name="isVerticalSplit">true: vertical split (left/right), false: horizontal split (top/bottom)</param>
+        /// <param name="splitRatio">Split ratio (0.1 ~ 0.9)</param>
+        /// <param name="newContent">Content for the new panel</param>
+        /// <returns>Created FlexiPaneContainer or null on failure</returns>
         public static FlexiPaneContainer? SplitPane(
             FlexiPaneItem sourcePane,
             bool isVerticalSplit,
@@ -45,7 +45,7 @@ namespace FlexiPane.Managers
             Debug.WriteLine($"[FlexiPaneManager] SourcePane validation passed");
 #endif
 
-            // 분할 비율 검증
+            // Validate split ratio
 #if DEBUG
             Debug.WriteLine($"[FlexiPaneManager] Validating split ratio: {splitRatio:F2}");
 #endif
@@ -61,7 +61,7 @@ namespace FlexiPane.Managers
             Debug.WriteLine($"[FlexiPaneManager] Split ratio validated: {splitRatio:F2}");
 #endif
 
-            // sourcePane의 직접 부모 찾기
+            // Find direct parent of sourcePane
 #if DEBUG
             Debug.WriteLine($"[FlexiPaneManager] Finding sourcePane's direct parent");
 #endif
@@ -81,17 +81,17 @@ namespace FlexiPane.Managers
 
             try
             {
-                // 1. 새로운 FlexiPaneContainer 생성
+                // 1. Create new FlexiPaneContainer
                 var container = new FlexiPaneContainer
                 {
                     IsVerticalSplit = isVerticalSplit,
                     SplitRatio = splitRatio
                 };
 
-                // 2. 원본 패널의 속성 복사
+                // 2. Copy properties from source panel
                 CopyCommonProperties(sourcePane, container);
 
-                // 3. 새로운 패널 생성
+                // 3. Create new panel
                 var newPane = new FlexiPaneItem();
                 if (newContent != null)
                 {
@@ -99,7 +99,7 @@ namespace FlexiPane.Managers
                 }
                 else
                 {
-                    // 기본 콘텐츠 생성
+                    // Create default content
                     newPane.Content = CreateDefaultPaneContent();
                 }
 
@@ -107,17 +107,17 @@ namespace FlexiPane.Managers
                 Debug.WriteLine($"[FlexiPaneManager] Setting container children - First: {sourcePane.GetType().Name}, Second: {newPane.GetType().Name}");
 #endif
                 
-                // 4. sourcePane을 기존 부모에서 제거 (logical parent 충돌 방지)
+                // 4. Remove sourcePane from existing parent (prevent logical parent conflict)
 #if DEBUG
                 Debug.WriteLine($"[FlexiPaneManager] Removing sourcePane from current parent to avoid logical parent conflicts");
 #endif
                 RemoveFromLogicalParent(sourcePane);
                 
-                // 5. 컨테이너에 패널들 설정
+                // 5. Set panels in container
                 container.FirstChild = sourcePane;
                 container.SecondChild = newPane;
 
-                // 6. 직접 부모에서 sourcePane을 container로 교체
+                // 6. Replace sourcePane with container in direct parent
 #if DEBUG
                 Debug.WriteLine($"[FlexiPaneManager] Replacing sourcePane with container in direct parent");
 #endif
@@ -127,11 +127,11 @@ namespace FlexiPane.Managers
                 Debug.WriteLine($"[FlexiPaneManager] Split process completed - Container created with {container.FirstChild?.GetType().Name} and {container.SecondChild?.GetType().Name}");
 #endif
 
-                // 6. 이벤트 연결
+                // 6. Connect events
                 ConnectPaneEvents(sourcePane);
                 ConnectPaneEvents(newPane);
 
-                // 7. 새 패널 생성 이벤트 발생
+                // 7. Raise new panel created event
                 var flexiPanel = FlexiPanel.FindAncestorPanel(container);
                 if (flexiPanel != null)
                 {
@@ -155,12 +155,12 @@ namespace FlexiPane.Managers
         }
 
         /// <summary>
-        /// FlexiPaneContainer에서 패널을 제거하고 필요시 구조 단순화
-        /// splitting-mechanism.md의 제거 알고리즘을 따름
+        /// Remove panel from FlexiPaneContainer and simplify structure if needed
+        /// Follows the removal algorithm from splitting-mechanism.md
         /// </summary>
-        /// <param name="containerToClose">닫힐 패널이 속한 컨테이너</param>
-        /// <param name="paneToClose">닫힐 패널</param>
-        /// <returns>성공 여부</returns>
+        /// <param name="containerToClose">Container that the panel to close belongs to</param>
+        /// <param name="paneToClose">Panel to close</param>
+        /// <returns>Success status</returns>
         public static bool ClosePane(FlexiPaneContainer containerToClose, FlexiPaneItem paneToClose)
         {
 #if DEBUG
@@ -176,7 +176,7 @@ namespace FlexiPane.Managers
 
             try
             {
-                // 1. 남을 패널(형제) 결정
+                // 1. Determine remaining panel (sibling)
                 UIElement? sibling = null;
                 if (containerToClose.FirstChild == paneToClose)
                 {
@@ -201,18 +201,18 @@ namespace FlexiPane.Managers
                     return false;
                 }
 
-                // 2. 부모의 부모(grandParent) 찾기 - FlexiPanel 포함
+                // 2. Find parent's parent (grandParent) - including FlexiPanel
                 var grandParent = containerToClose.Parent;
-                DependencyObject? actualGrandParent = grandParent; // 실제로 교체를 수행할 부모
+                DependencyObject? actualGrandParent = grandParent; // Parent that will actually perform replacement
                 
-                // Parent가 null인 경우 FlexiPanel의 RootContent일 수 있음
+                // When Parent is null, it could be FlexiPanel's RootContent
                 if (grandParent == null)
                 {
 #if DEBUG
                     Debug.WriteLine($"[FlexiPaneManager] No direct parent found, searching for FlexiPanel via RootContent");
 #endif
                     
-                    // FlexiPanel의 RootContent로 설정된 경우 찾기
+                    // Find if it's set as FlexiPanel's RootContent
                     var flexiPanel = FlexiPanel.FindAncestorPanel(containerToClose);
                     if (flexiPanel != null && flexiPanel.RootContent == containerToClose)
                     {
@@ -230,13 +230,13 @@ namespace FlexiPane.Managers
                         return false;
                     }
                 }
-                // grandParent가 Grid인 경우, 실제 FlexiPaneContainer를 찾아야 함
+                // When grandParent is Grid, need to find actual FlexiPaneContainer
                 else if (grandParent is Grid grid)
                 {
 #if DEBUG
                     Debug.WriteLine($"[FlexiPaneManager] GrandParent is Grid, finding actual FlexiPaneContainer");
 #endif
-                    // Grid의 부모가 FlexiPaneContainer일 것임
+                    // Grid's parent should be FlexiPaneContainer
                     var containerParent = LogicalTreeHelper.GetParent(grid) ?? VisualTreeHelper.GetParent(grid);
                     if (containerParent is FlexiPaneContainer parentContainer)
                     {
@@ -247,7 +247,7 @@ namespace FlexiPane.Managers
                     }
                     else
                     {
-                        actualGrandParent = grandParent; // Grid 자체를 사용
+                        actualGrandParent = grandParent; // Use Grid itself
                     }
                 }
                 else
@@ -259,7 +259,7 @@ namespace FlexiPane.Managers
                 Debug.WriteLine($"[FlexiPaneManager] Container grandParent: {grandParent.GetType().Name}, Actual grandParent: {actualGrandParent?.GetType().Name}");
 #endif
 
-                // 3. 먼저 형제를 컨테이너에서 분리
+                // 3. First detach sibling from container
                 if (containerToClose.FirstChild == sibling)
                 {
                     containerToClose.FirstChild = null!;
@@ -273,16 +273,16 @@ namespace FlexiPane.Managers
                 Debug.WriteLine($"[FlexiPaneManager] Sibling disconnected from container");
 #endif
 
-                // 4. 계층 구조 단순화: actualGrandParent에서 container를 sibling으로 교체
+                // 4. Simplify hierarchy: replace container with sibling in actualGrandParent
                 ReplaceChild(actualGrandParent!, containerToClose, sibling);
 
-                // 5. 리소스 정리
+                // 5. Clean up resources
                 DisconnectPaneEvents(paneToClose);
                 containerToClose.FirstChild = null!;
                 containerToClose.SecondChild = null!;
 
-                // 6. 구조 단순화 확인 - 형제가 컨테이너인 경우에만 수행
-                // (형제가 FlexiPaneItem인 경우는 이미 교체로 단순화 완료)
+                // 6. Check structure simplification - only perform when sibling is container
+                // (When sibling is FlexiPaneItem, simplification is already done through replacement)
                 if (sibling is FlexiPaneContainer)
                 {
                     SimplifyStructure(actualGrandParent!);
@@ -307,7 +307,7 @@ namespace FlexiPane.Managers
         #region Helper Methods
 
         /// <summary>
-        /// UIElement의 직접 부모 찾기 (FlexiPanel 또는 FlexiPaneContainer)
+        /// Find direct parent of UIElement (FlexiPanel or FlexiPaneContainer)
         /// </summary>
         private static DependencyObject? FindDirectParent(UIElement element)
         {
@@ -317,7 +317,7 @@ namespace FlexiPane.Managers
             Debug.WriteLine($"[FlexiPaneManager] FindDirectParent - Element: {element.GetType().Name}");
 #endif
 
-            // Logical Parent 우선 확인
+            // Check Logical Parent first
             var logicalParent = LogicalTreeHelper.GetParent(element);
             if (logicalParent != null)
             {
@@ -325,7 +325,7 @@ namespace FlexiPane.Managers
                 Debug.WriteLine($"[FlexiPaneManager] Logical parent found: {logicalParent.GetType().Name}");
 #endif
                 
-                // FlexiPanel이나 FlexiPaneContainer를 찾을 때까지 올라감
+                // Go up until finding FlexiPanel or FlexiPaneContainer
                 var current = logicalParent;
                 while (current != null)
                 {
@@ -341,7 +341,7 @@ namespace FlexiPane.Managers
                 }
             }
 
-            // Visual Parent로 대체 시도
+            // Try Visual Parent as fallback
             var visualParent = VisualTreeHelper.GetParent(element);
             if (visualParent != null)
             {
@@ -371,22 +371,22 @@ namespace FlexiPane.Managers
         }
 
         /// <summary>
-        /// FlexiPaneItem의 직접 부모 FlexiPaneContainer를 찾기
+        /// Find direct parent FlexiPaneContainer of FlexiPaneItem
         /// </summary>
         public static FlexiPaneContainer? FindDirectParentContainer(FlexiPaneItem pane)
         {
             if (pane == null) return null;
 
-            // 먼저 직접 부모를 확인
+            // First check direct parent
             var directParent = pane.Parent;
 #if DEBUG
             Debug.WriteLine($"[FlexiPaneManager] FindDirectParentContainer - Pane: {pane.GetHashCode()}, Direct parent: {directParent?.GetType().Name}");
 #endif
 
-            // 직접 부모가 Grid인 경우, Visual Tree를 사용해서 부모를 확인
+            // When direct parent is Grid, check parent using Visual Tree
             if (directParent is Grid grid)
             {
-                // Logical Parent와 Visual Parent 모두 확인
+                // Check both Logical Parent and Visual Parent
                 var logicalParent = LogicalTreeHelper.GetParent(grid);
                 var visualParent = VisualTreeHelper.GetParent(grid);
                 
@@ -394,14 +394,14 @@ namespace FlexiPane.Managers
                 Debug.WriteLine($"[FlexiPaneManager] Direct parent is Grid, checking parents - Logical: {logicalParent?.GetType().Name}, Visual: {visualParent?.GetType().Name}");
 #endif
                 
-                // Logical Parent 먼저 확인
+                // Check Logical Parent first
                 if (logicalParent is FlexiPaneContainer logicalContainer)
                 {
 #if DEBUG
                     Debug.WriteLine($"[FlexiPaneManager] Found logical FlexiPaneContainer - FirstChild: {logicalContainer.FirstChild?.GetType().Name}, SecondChild: {logicalContainer.SecondChild?.GetType().Name}");
 #endif
                     
-                    // 빈 컨테이너가 아닌 경우만 확인
+                    // Check only if not an empty container
                     if (!IsEmptyContainer(logicalContainer) && 
                         (ContainsPaneRecursively(logicalContainer.FirstChild, pane) || ContainsPaneRecursively(logicalContainer.SecondChild, pane)))
                     {
@@ -418,14 +418,14 @@ namespace FlexiPane.Managers
 #endif
                 }
                 
-                // Visual Parent 확인
+                // Check Visual Parent
                 if (visualParent is FlexiPaneContainer visualContainer)
                 {
 #if DEBUG
                     Debug.WriteLine($"[FlexiPaneManager] Found visual FlexiPaneContainer - FirstChild: {visualContainer.FirstChild?.GetType().Name}, SecondChild: {visualContainer.SecondChild?.GetType().Name}");
 #endif
                     
-                    // 빈 컨테이너가 아닌 경우만 확인
+                    // Check only if not an empty container
                     if (!IsEmptyContainer(visualContainer) && 
                         (ContainsPaneRecursively(visualContainer.FirstChild, pane) || ContainsPaneRecursively(visualContainer.SecondChild, pane)))
                     {
@@ -443,7 +443,7 @@ namespace FlexiPane.Managers
                 }
             }
 
-            // Visual Tree와 Logical Tree를 모두 탐색
+            // Search both Visual Tree and Logical Tree
             var current = directParent;
             
             while (current != null)
@@ -452,14 +452,14 @@ namespace FlexiPane.Managers
                 Debug.WriteLine($"[FlexiPaneManager] Checking parent: {current.GetType().Name}");
 #endif
                 
-                // FlexiPaneContainer를 찾은 경우
+                // When FlexiPaneContainer is found
                 if (current is FlexiPaneContainer container)
                 {
 #if DEBUG
                     Debug.WriteLine($"[FlexiPaneManager] Found FlexiPaneContainer - FirstChild: {container.FirstChild?.GetType().Name ?? "null"}, SecondChild: {container.SecondChild?.GetType().Name ?? "null"}");
 #endif
                     
-                    // 빈 컨테이너가 아니고 이 컨테이너가 우리 pane을 포함하는지 재귀적으로 확인
+                    // Recursively check if not empty container and if this container contains our pane
                     if (!IsEmptyContainer(container) && 
                         (ContainsPaneRecursively(container.FirstChild, pane) || ContainsPaneRecursively(container.SecondChild, pane)))
                     {
@@ -476,7 +476,7 @@ namespace FlexiPane.Managers
 #endif
                 }
 
-                // 다음 부모로 이동
+                // Move to next parent
                 if (current is FrameworkElement element)
                 {
                     current = element.Parent;
@@ -494,7 +494,7 @@ namespace FlexiPane.Managers
         }
 
         /// <summary>
-        /// UIElement가 특정 FlexiPaneItem을 포함하는지 재귀적으로 확인
+        /// Recursively check if UIElement contains specific FlexiPaneItem
         /// </summary>
         private static bool ContainsPaneRecursively(UIElement? element, FlexiPaneItem targetPane)
         {
@@ -534,7 +534,7 @@ namespace FlexiPane.Managers
         }
 
         /// <summary>
-        /// 기본 패널 콘텐츠 생성
+        /// Create default panel content
         /// </summary>
         private static UIElement CreateDefaultPaneContent()
         {
@@ -561,7 +561,7 @@ namespace FlexiPane.Managers
         }
 
         /// <summary>
-        /// 공통 속성 복사
+        /// Copy common properties
         /// </summary>
         private static void CopyCommonProperties(UIElement source, UIElement target)
         {
@@ -585,7 +585,7 @@ namespace FlexiPane.Managers
         }
 
         /// <summary>
-        /// 부모에서 요소 제거
+        /// Remove element from parent
         /// </summary>
         private static void RemoveFromParent(UIElement child, DependencyObject parent)
         {
@@ -600,7 +600,7 @@ namespace FlexiPane.Managers
 #endif
                     panel.Children.Remove(child);
                     
-                    // Grid에서 제거할 때 Grid attached properties 초기화
+                    // Reset Grid attached properties when removing from Grid
                     if (panel is Grid)
                     {
                         Grid.SetRow(child, 0);
@@ -637,7 +637,7 @@ namespace FlexiPane.Managers
         }
 
         /// <summary>
-        /// 부모에서 자식 요소를 교체 (위치 정보 보존)
+        /// Replace child element in parent (preserve position info)
         /// </summary>
         private static void ReplaceChild(DependencyObject parent, UIElement oldChild, UIElement newChild)
         {
@@ -653,7 +653,7 @@ namespace FlexiPane.Managers
                     var index = panel.Children.IndexOf(oldChild);
                     if (index >= 0)
                     {
-                        // Grid attached properties 백업
+                        // Backup Grid attached properties
                         if (panel is Grid)
                         {
                             var row = Grid.GetRow(oldChild);
@@ -668,7 +668,7 @@ namespace FlexiPane.Managers
                             panel.Children.RemoveAt(index);
                             panel.Children.Insert(index, newChild);
                             
-                            // 새 요소에 위치 정보 적용
+                            // Apply position info to new element
                             Grid.SetRow(newChild, row);
                             Grid.SetColumn(newChild, column);
                             Grid.SetRowSpan(newChild, rowSpan);
@@ -706,9 +706,9 @@ namespace FlexiPane.Managers
                     Debug.WriteLine($"[FlexiPaneManager] Replacing in FlexiPaneContainer");
 #endif
                     if (container.FirstChild == oldChild)
-                        container.FirstChild = newChild;
+                        container.FirstChild = newChild as UIElement;
                     else if (container.SecondChild == oldChild)
-                        container.SecondChild = newChild;
+                        container.SecondChild = newChild as UIElement;
                     break;
                     
                 case FlexiPanel panel:
@@ -731,7 +731,7 @@ namespace FlexiPane.Managers
         }
 
         /// <summary>
-        /// 부모에 요소 추가
+        /// Add element to parent
         /// </summary>
         private static void AddToParent(UIElement child, DependencyObject parent)
         {
@@ -746,10 +746,10 @@ namespace FlexiPane.Managers
 #if DEBUG
                     Debug.WriteLine($"[FlexiPaneManager] Adding to Panel - Panel type: {panel.GetType().Name}, Current children count: {panel.Children.Count}");
 #endif
-                    // Grid인 경우 자식들의 위치가 겹치지 않도록 처리
+                    // Handle Grid to prevent overlapping child positions
                     if (panel is Grid grid)
                     {
-                        // FlexiPaneContainer의 Grid는 자체적으로 레이아웃을 관리하므로 그대로 추가
+                        // FlexiPaneContainer's Grid manages layout internally, so just add
                         grid.Children.Add(child);
 #if DEBUG
                         Debug.WriteLine($"[FlexiPaneManager] Added to Grid without position - children count: {grid.Children.Count}");
@@ -815,11 +815,11 @@ namespace FlexiPane.Managers
 #if DEBUG
                     Debug.WriteLine($"[FlexiPaneManager] Adding to FlexiPaneContainer");
 #endif
-                    // 첫 번째 빈 슬롯에 추가
+                    // Add to first empty slot
                     if (container.FirstChild == null)
-                        container.FirstChild = child;
+                        container.FirstChild = child as UIElement;
                     else if (container.SecondChild == null)
-                        container.SecondChild = child;
+                        container.SecondChild = child as UIElement;
                     break;
                 default:
 #if DEBUG
@@ -833,30 +833,28 @@ namespace FlexiPane.Managers
         }
 
         /// <summary>
-        /// 패널 이벤트 연결 (분할 관련만)
+        /// Connect panel events
         /// </summary>
         public static void ConnectPaneEvents(FlexiPaneItem pane)
         {
             if (pane == null) return;
 
-            // 분할 요청 이벤트만 처리 (닫기는 FlexiPanel에서 처리)
-            pane.SplitRequested += OnPaneSplitRequested;
+            // Only connect Closed event (split is handled through routed events)
             pane.Closed += OnPaneClosed;
         }
 
         /// <summary>
-        /// 패널 이벤트 연결 해제
+        /// Disconnect panel events
         /// </summary>
         public static void DisconnectPaneEvents(FlexiPaneItem pane)
         {
             if (pane == null) return;
 
-            pane.SplitRequested -= OnPaneSplitRequested;
             pane.Closed -= OnPaneClosed;
         }
 
         /// <summary>
-        /// UIElement를 현재 논리적 부모에서 제거
+        /// Remove UIElement from current logical parent
         /// </summary>
         private static void RemoveFromLogicalParent(UIElement element)
         {
@@ -866,7 +864,7 @@ namespace FlexiPane.Managers
             Debug.WriteLine($"[FlexiPaneManager] RemoveFromLogicalParent - Element: {element.GetType().Name}");
 #endif
 
-            // Visual Tree와 Logical Tree를 통해 부모 찾기
+            // Find parent through Visual Tree and Logical Tree
             DependencyObject logicalParent = LogicalTreeHelper.GetParent(element);
             DependencyObject visualParent = VisualTreeHelper.GetParent(element);
 
@@ -875,7 +873,7 @@ namespace FlexiPane.Managers
             Debug.WriteLine($"[FlexiPaneManager] VisualParent: {visualParent?.GetType().Name ?? "null"}");
 #endif
 
-            // Logical Parent 우선 처리
+            // Process Logical Parent first
             if (logicalParent != null)
             {
 #if DEBUG
@@ -883,7 +881,7 @@ namespace FlexiPane.Managers
 #endif
                 RemoveFromParent(element, logicalParent);
             }
-            // Visual Parent가 다른 경우 처리
+            // Process when Visual Parent is different
             else if (visualParent != null && visualParent != logicalParent)
             {
 #if DEBUG
@@ -899,7 +897,7 @@ namespace FlexiPane.Managers
 
 
         /// <summary>
-        /// 컨테이너가 비어있는지 확인
+        /// Check if container is empty
         /// </summary>
         private static bool IsEmptyContainer(FlexiPaneContainer container)
         {
@@ -909,7 +907,7 @@ namespace FlexiPane.Managers
         }
         
         /// <summary>
-        /// 컨테이너 내의 총 패널 개수 세기
+        /// Count total number of panels in container
         /// </summary>
         private static int CountPanesInContainer(UIElement? element)
         {
@@ -930,8 +928,8 @@ namespace FlexiPane.Managers
         }
         
         /// <summary>
-        /// 구조 단순화 - splitting-mechanism.md 문서에 정의된 규칙에 따름
-        /// 컨테이너에 하나의 자식만 남은 경우, 그 자식을 부모 레벨로 승격
+        /// Structure simplification - follows rules defined in splitting-mechanism.md
+        /// When container has only one child, promote that child to parent level
         /// </summary>
         private static void SimplifyStructure(DependencyObject parent)
         {
@@ -941,7 +939,7 @@ namespace FlexiPane.Managers
             Debug.WriteLine($"[FlexiPaneManager] SimplifyStructure - Parent: {parent.GetType().Name}");
 #endif
             
-            // FlexiPanel인 경우
+            // FlexiPanel case
             if (parent is FlexiPanel flexiPanel)
             {
                 if (flexiPanel.RootContent is FlexiPaneContainer rootContainer)
@@ -949,10 +947,10 @@ namespace FlexiPane.Managers
                     SimplifyContainer(rootContainer, flexiPanel, null);
                 }
             }
-            // FlexiPaneContainer인 경우
+            // FlexiPaneContainer case
             else if (parent is FlexiPaneContainer parentContainer)
             {
-                // 부모 컨테이너의 자식 컨테이너들 단순화
+                // Simplify child containers of parent container
                 if (parentContainer.FirstChild is FlexiPaneContainer firstContainer)
                 {
                     SimplifyContainer(firstContainer, null, parentContainer);
@@ -962,10 +960,10 @@ namespace FlexiPane.Managers
                     SimplifyContainer(secondContainer, null, parentContainer);
                 }
             }
-            // Grid인 경우 (FlexiPaneContainer의 내부 구현)
+            // Grid case (FlexiPaneContainer internal implementation)
             else if (parent is Grid)
             {
-                // FlexiPanel을 찾아서 전체 구조 단순화
+                // Find FlexiPanel and simplify entire structure
                 var panel = FlexiPanel.FindAncestorPanel(parent);
                 if (panel != null && panel.RootContent is FlexiPaneContainer rootContainer)
                 {
@@ -978,7 +976,7 @@ namespace FlexiPane.Managers
         }
         
         /// <summary>
-        /// 개별 컨테이너 단순화 - 하나의 자식만 있는 경우 그 자식을 승격
+        /// Simplify individual container - promote single child when only one exists
         /// </summary>
         private static void SimplifyContainer(FlexiPaneContainer container, FlexiPanel? flexiPanel, FlexiPaneContainer? parentContainer)
         {
@@ -988,7 +986,7 @@ namespace FlexiPane.Managers
             Debug.WriteLine($"[FlexiPaneManager] SimplifyContainer - FirstChild: {container.FirstChild?.GetType().Name ?? "null"}, SecondChild: {container.SecondChild?.GetType().Name ?? "null"}");
 #endif
             
-            // 빈 컨테이너인 경우 부모에서 제거
+            // Remove empty container from parent
             if (IsEmptyContainer(container))
             {
 #if DEBUG
@@ -1008,11 +1006,11 @@ namespace FlexiPane.Managers
                 return;
             }
             
-            // 먼저 자식 컨테이너들을 재귀적으로 단순화
+            // First recursively simplify child containers
             if (container.FirstChild is FlexiPaneContainer firstChildContainer)
             {
                 SimplifyContainer(firstChildContainer, null, container);
-                // 단순화 후 빈 컨테이너가 되었는지 확인
+                // Check if became empty container after simplification
                 if (IsEmptyContainer(firstChildContainer))
                 {
                     container.FirstChild = null!;
@@ -1021,14 +1019,14 @@ namespace FlexiPane.Managers
             if (container.SecondChild is FlexiPaneContainer secondChildContainer)
             {
                 SimplifyContainer(secondChildContainer, null, container);
-                // 단순화 후 빈 컨테이너가 되었는지 확인
+                // Check if became empty container after simplification
                 if (IsEmptyContainer(secondChildContainer))
                 {
                     container.SecondChild = null!;
                 }
             }
             
-            // 컨테이너에 하나의 자식만 있는지 확인
+            // Check if container has only one child
             UIElement? singleChild = null;
             if (container.FirstChild != null && container.SecondChild == null)
             {
@@ -1039,38 +1037,38 @@ namespace FlexiPane.Managers
                 singleChild = container.SecondChild;
             }
             
-            // 하나의 자식만 있는 경우 승격 처리
+            // Promote when only one child exists
             if (singleChild != null)
             {
 #if DEBUG
                 Debug.WriteLine($"[FlexiPaneManager] Container has single child: {singleChild.GetType().Name}");
 #endif
                 
-                // FlexiPanel의 RootContent인 경우
+                // FlexiPanel's RootContent case
                 if (flexiPanel != null && flexiPanel.RootContent == container)
                 {
 #if DEBUG
                     Debug.WriteLine($"[FlexiPaneManager] Promoting single child to RootContent for structure simplification");
 #endif
-                    // 컨테이너에서 자식 분리
+                    // Detach child from container
                     container.FirstChild = null!;
                     container.SecondChild = null!;
-                    // 단일 자식을 RootContent로 승격 (컨테이너든 아이템이든)
+                    // Promote single child to RootContent (whether container or item)
                     flexiPanel.RootContent = singleChild;
                 }
-                // 일반 컨테이너의 자식인 경우
+                // General container child case
                 else if (parentContainer != null)
                 {
-                    // 부모 컨테이너에서 현재 컨테이너를 singleChild로 교체
+                    // Replace current container with singleChild in parent container
 #if DEBUG
                     Debug.WriteLine($"[FlexiPaneManager] Replacing container with its single child in parent container");
 #endif
                     
-                    // 컨테이너에서 자식 분리
+                    // Detach child from container
                     container.FirstChild = null!;
                     container.SecondChild = null!;
                     
-                    // 부모에서 교체
+                    // Replace in parent
                     if (parentContainer.FirstChild == container)
                     {
                         parentContainer.FirstChild = singleChild;
@@ -1088,7 +1086,7 @@ namespace FlexiPane.Managers
         #region Event Handlers
 
         /// <summary>
-        /// 패널 분할 요청 이벤트 처리
+        /// Handle panel split request event
         /// </summary>
         private static void OnPaneSplitRequested(object? sender, PaneSplitRequestedEventArgs e)
         {
@@ -1108,12 +1106,12 @@ namespace FlexiPane.Managers
             Debug.WriteLine($"[FlexiPaneManager] Processing split request - IsVertical: {e.IsVerticalSplit}, Ratio: {e.SplitRatio:F2}");
 #endif
 
-            // 자동 분할 수행
+            // Perform automatic split
             var result = SplitPane(sourcePane, e.IsVerticalSplit, e.SplitRatio, e.NewContent as UIElement);
             
             if (result == null)
             {
-                // 분할 실패를 이벤트 아규먼트에 표시
+                // Mark split failure in event arguments
                 e.Cancel = true;
 #if DEBUG
                 Debug.WriteLine($"[FlexiPaneManager] Split failed - setting Cancel = true");
@@ -1129,11 +1127,11 @@ namespace FlexiPane.Managers
 
 
         /// <summary>
-        /// 패널 닫기 완료 이벤트 처리
+        /// Handle panel close completion event
         /// </summary>
         private static void OnPaneClosed(object? sender, PaneClosedEventArgs e)
         {
-            // 이벤트 연결 해제
+            // Disconnect events
             if (e.Pane != null)
             {
                 DisconnectPaneEvents(e.Pane);

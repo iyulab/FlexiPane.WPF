@@ -6,7 +6,7 @@
     <!-- BooleanToVisibilityConverter -->
     <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
 
-    <!-- FlexiPanel 기본 스타일 -->
+    <!-- FlexiPanel default style -->
     <Style TargetType="{x:Type controls:FlexiPanel}">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Template">
@@ -21,7 +21,7 @@
         </Setter>
     </Style>
 
-    <!-- FlexiPaneContainer 기본 스타일 -->
+    <!-- FlexiPaneContainer default style -->
     <Style TargetType="{x:Type controls:FlexiPaneContainer}">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Template">
@@ -29,7 +29,7 @@
                 <ControlTemplate TargetType="{x:Type controls:FlexiPaneContainer}">
                     <Grid x:Name="PART_ContainerGrid" 
                           Background="{TemplateBinding Background}">
-                        <!-- 분할된 영역들과 GridSplitter가 동적으로 배치됨 -->
+                        <!-- Split areas and GridSplitter are dynamically placed -->
                     </Grid>
                 </ControlTemplate>
             </Setter.Value>

@@ -4,9 +4,9 @@ using System.Windows.Input;
 namespace FlexiPane.Commands
 {
     /// <summary>
-    /// 범용 RelayCommand 구현
+    /// Generic RelayCommand implementation
     /// </summary>
-    public class RelayCommand : ICommand
+    internal class RelayCommand : ICommand
     {
         private readonly Action<object?> _execute;
         private readonly Predicate<object?>? _canExecute;
@@ -45,7 +45,7 @@ namespace FlexiPane.Commands
         }
 
         /// <summary>
-        /// CanExecuteChanged 이벤트를 강제로 발생시킵니다.
+        /// Forces CanExecuteChanged event to be raised.
         /// </summary>
         public void RaiseCanExecuteChanged()
         {

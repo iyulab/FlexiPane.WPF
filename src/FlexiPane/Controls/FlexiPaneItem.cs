@@ -12,8 +12,8 @@ using FlexiPane.Managers;
 namespace FlexiPane.Controls
 {
     /// <summary>
-    /// 실제 콘텐츠를 담는 분할 가능한 패널
-    /// 분할 모드 UI를 제공하고, 분할되면 FlexiPaneContainer로 교체됨
+    /// A splittable panel that contains actual content
+    /// Provides split mode UI and is replaced with FlexiPaneContainer when split
     /// </summary>
     [TemplatePart(Name = "PART_ContainerGrid", Type = typeof(Grid))]
     [TemplatePart(Name = "PART_ContentBorder", Type = typeof(Border))]
@@ -44,15 +44,15 @@ namespace FlexiPane.Controls
         {
             PaneId = Guid.NewGuid().ToString();
             
-            // Commands 초기화
+            // Initialize commands
             CloseCommand = new RelayCommand(ExecuteClose, CanExecuteClose);
             SplitVerticalCommand = new RelayCommand(_ => RequestSplit(true), _ => CanSplit);
             SplitHorizontalCommand = new RelayCommand(_ => RequestSplit(false), _ => CanSplit);
 
-            // 기본값 설정
+            // Set default values
             CanSplit = true;
             
-            // 이벤트 구독
+            // Subscribe to events
             this.Loaded += OnLoaded;
             this.Unloaded += OnUnloaded;
         }
@@ -86,7 +86,7 @@ namespace FlexiPane.Controls
         }
 
         /// <summary>
-        /// 패널 고유 식별자
+        /// Panel unique identifier
         /// </summary>
         public string PaneId
         {
@@ -219,17 +219,7 @@ namespace FlexiPane.Controls
         #region Events
 
         /// <summary>
-        /// 분할 요청 이벤트
-        /// </summary>
-        public event EventHandler<PaneSplitRequestedEventArgs>? SplitRequested;
-
-        /// <summary>
-        /// 패널 닫기 요청 이벤트 (취소 가능)
-        /// </summary>
-        public event EventHandler<PaneClosingEventArgs>? Closing;
-
-        /// <summary>
-        /// 패널 닫힘 완료 이벤트
+        /// Panel closed event
         /// </summary>
         public event EventHandler<PaneClosedEventArgs>? Closed;
 
@@ -243,10 +233,10 @@ namespace FlexiPane.Controls
 
             base.OnApplyTemplate();
 
-            // 기존 이벤트 핸들러 제거
+            // Remove existing event handlers
             RemoveEventHandlers();
 
-            // 템플릿 요소 가져오기
+            // Get template elements
             _containerGrid = GetTemplateChild("PART_ContainerGrid") as Grid;
             _contentBorder = GetTemplateChild("PART_ContentBorder") as Border;
             _splitOverlay = GetTemplateChild("PART_SplitOverlay") as Grid;
@@ -255,10 +245,10 @@ namespace FlexiPane.Controls
             _horizontalGuideLine = GetTemplateChild("PART_HorizontalGuideLine") as Line;
             _defaultGuidePanel = GetTemplateChild("PART_DefaultGuidePanel") as Border;
 
-            // 이벤트 핸들러 연결
+            // Connect event handlers
             ConnectEventHandlers();
 
-            // 키보드 포커스 설정
+            // Set keyboard focus
             this.Focusable = true;
         }
 
@@ -298,7 +288,7 @@ namespace FlexiPane.Controls
 
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
-            // 로드 시 FlexiPaneManager에 이벤트 자동 연결
+            // Auto-connect events to FlexiPaneManager on load
             FlexiPaneManager.ConnectPaneEvents(this);
 #if DEBUG
             Debug.WriteLine($"[FlexiPaneItem] OnLoaded - Connected to FlexiPaneManager");
@@ -307,7 +297,7 @@ namespace FlexiPane.Controls
 
         private void OnUnloaded(object sender, RoutedEventArgs e)
         {
-            // 언로드 시 FlexiPaneManager에서 이벤트 해제
+            // Disconnect events from FlexiPaneManager on unload
             FlexiPaneManager.DisconnectPaneEvents(this);
 #if DEBUG
             Debug.WriteLine($"[FlexiPaneItem] OnUnloaded - Disconnected from FlexiPaneManager");
@@ -331,7 +321,7 @@ namespace FlexiPane.Controls
                 return;
             }
 
-            // 클릭 위치에 따라 분할 방향 결정
+            // Determine split direction based on click position
             var position = e.GetPosition(_splitOverlay);
             var width = _splitOverlay!.ActualWidth;
             var height = _splitOverlay!.ActualHeight;
@@ -343,13 +333,13 @@ namespace FlexiPane.Controls
             bool isVerticalSplit;
             double splitRatio;
 
-            // 가장자리 영역 크기 (UpdateGuideLines와 동일)
+            // Edge area size (same as UpdateGuideLines)
             const double edgeThreshold = 50;
 
-            // 가장자리 클릭으로 분할 방향 결정
+            // Determine split direction by edge click
             if (position.X <= edgeThreshold || position.X >= width - edgeThreshold)
             {
-                // 좌우 가장자리: 수평 분할 (가로선 위치에서 분할)
+                // Left/right edge: horizontal split (split at horizontal line position)
                 isVerticalSplit = false;
                 splitRatio = position.Y / height;
 #if DEBUG
@@ -358,7 +348,7 @@ namespace FlexiPane.Controls
             }
             else
             {
-                // 상하 또는 중앙: 수직 분할 (세로선 위치에서 분할)
+                // Top/bottom or center: vertical split (split at vertical line position)
                 isVerticalSplit = true;
                 splitRatio = position.X / width;
 #if DEBUG
@@ -366,7 +356,7 @@ namespace FlexiPane.Controls
 #endif
             }
 
-            // 분할 비율 범위 제한
+            // Limit split ratio range
             splitRatio = Math.Max(0.1, Math.Min(0.9, splitRatio));
 
 #if DEBUG
@@ -481,7 +471,7 @@ namespace FlexiPane.Controls
         #region Public Methods
 
         /// <summary>
-        /// 패널 닫기
+        /// Close panel
         /// </summary>
         public void Close()
         {
@@ -492,7 +482,7 @@ namespace FlexiPane.Controls
         }
 
         /// <summary>
-        /// 패널 분할
+        /// Split panel
         /// </summary>
         public void Split(bool isVerticalSplit, double splitRatio = 0.5, object? newContent = null)
         {
@@ -515,7 +505,7 @@ namespace FlexiPane.Controls
 #if DEBUG
             Debug.WriteLine($"[FlexiPaneItem] RAISING SPLIT EVENT - Routing to FlexiPanel");
 #endif
-            // FlexiPanel의 Routed Event로 버블링
+            // Bubble up to FlexiPanel's Routed Event
             e.RoutedEvent = FlexiPanel.PaneSplitRequestedEvent;
             RaiseEvent(e);
         }
@@ -525,7 +515,7 @@ namespace FlexiPane.Controls
 #if DEBUG
             Debug.WriteLine($"[FlexiPaneItem] OnClosing - Raising routed event");
 #endif
-            // FlexiPanel의 Routed Event로 버블링
+            // Bubble up to FlexiPanel's Routed Event
             e.RoutedEvent = FlexiPanel.PaneClosingEvent;
             RaiseEvent(e);
         }
@@ -540,7 +530,7 @@ namespace FlexiPane.Controls
         {
             if (_defaultGuidePanel == null) return;
 
-            // 사용자 정의 콘텐츠가 있으면 기본 패널 숨기기
+            // Hide default panel if custom content exists
             bool hasCustomContent = SplitGuideContent != null;
             _defaultGuidePanel.Visibility = hasCustomContent ? Visibility.Collapsed : Visibility.Visible;
         }
@@ -552,19 +542,19 @@ namespace FlexiPane.Controls
             var width = _splitOverlay.ActualWidth;
             var height = _splitOverlay.ActualHeight;
 
-            // 가장자리 영역 크기
+            // Edge area size
             const double edgeThreshold = 50;
             
-            // 마우스 위치에 따라 분할 방향 결정
+            // Determine split direction based on mouse position
             if (mousePosition.X <= edgeThreshold || mousePosition.X >= width - edgeThreshold)
             {
-                // 좌우 가장자리: 수평 분할 (세로선 표시)
+                // Left/right edge: horizontal split (show vertical line)
                 ShowVerticalGuideLine(mousePosition.Y, height);
                 HideHorizontalGuideLine();
             }
             else
             {
-                // 상하 또는 중앙: 수직 분할 (가로선 표시)
+                // Top/bottom or center: vertical split (show horizontal line)
                 ShowHorizontalGuideLine(mousePosition.X, width);
                 HideVerticalGuideLine();
             }
@@ -622,12 +612,12 @@ namespace FlexiPane.Controls
             {
                 _isDisposed = true;
 
-                // 이벤트 핸들러 해제
+                // Disconnect event handlers
                 RemoveEventHandlers();
                 this.Loaded -= OnLoaded;
                 this.Unloaded -= OnUnloaded;
 
-                // 리소스 정리
+                // Clean up resources
                 _containerGrid = null;
                 _contentBorder = null;
                 _splitOverlay = null;
@@ -638,7 +628,7 @@ namespace FlexiPane.Controls
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"FlexiPaneItem Dispose 오류: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"FlexiPaneItem Dispose error: {ex.Message}");
             }
         }
 

@@ -1,14 +1,7 @@
 using System.Diagnostics;
-using System.Text;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using FlexiPane.Controls;
 using FlexiPane.Events;
 using FlexiPane.Managers;
@@ -31,17 +24,17 @@ namespace FlexiPane.Samples.DefaultApp
             Debug.WriteLine($"[MainWindow] Initializing - subscribing to events");
 #endif
             
-            // FlexiPanel 이벤트 구독 - PaneSplitRequested를 먼저 처리하기 위해 AddHandler 사용
+            // Subscribe to FlexiPanel events - use AddHandler to process PaneSplitRequested first
             FlexiPanel.AddHandler(FlexiPanel.PaneSplitRequestedEvent, 
                 new PaneSplitRequestedEventHandler(OnFlexiPanelPaneSplitRequested), false);
             
-            // 나머지 이벤트들은 일반 구독
+            // Subscribe to other events normally
             FlexiPanel.LastPaneClosing += OnLastPaneClosing;
             FlexiPanel.PaneClosing += OnFlexiPanelPaneClosing;
             FlexiPanel.NewPaneCreated += OnNewPaneCreated;
             FlexiPanel.SplitModeChanged += OnSplitModeChanged;
             
-            // 시작시 Visual Tree 상태 확인
+            // Check Visual Tree state on startup
             this.Loaded += MainWindow_Loaded;
         }
         
@@ -62,7 +55,7 @@ namespace FlexiPane.Samples.DefaultApp
 #if DEBUG
             Debug.WriteLine($"[MainWindow] ToggleSplitModeButton_Click");
 #endif
-            // FlexiPanel의 바인딩을 통해 전역 상태 관리
+            // Manage global state through FlexiPanel binding
             FlexiPanel.IsSplitModeActive = !FlexiPanel.IsSplitModeActive;
             FlexiPanel.ShowCloseButtons = FlexiPanel.IsSplitModeActive;
             
@@ -92,10 +85,10 @@ namespace FlexiPane.Samples.DefaultApp
             Debug.WriteLine($"[MainWindow] FlexiPanel PaneSplitRequested - IsVertical: {e.IsVerticalSplit}, Ratio: {e.SplitRatio}");
 #endif
             
-            // 새 패널에 커스텀 콘텐츠 제공
+            // Provide custom content for new panel
             e.NewContent = CreateNewPaneContent();
             
-            // 특정 조건에서 분할을 취소할 수도 있음
+            // Can cancel split under certain conditions
             // if (SomeCondition)
             // {
             //     e.Cancel = true;
@@ -108,8 +101,8 @@ namespace FlexiPane.Samples.DefaultApp
 #if DEBUG
             Debug.WriteLine($"[MainWindow] FlexiPanel PaneClosing - Pane: {e.Pane?.GetHashCode()}");
 #endif
-            // 여기서 특정 조건에 따라 닫기를 취소할 수 있음
-            // 예: 저장되지 않은 데이터가 있는 경우
+            // Can cancel close based on certain conditions here
+            // Example: When there is unsaved data
             // if (HasUnsavedData(e.Pane))
             // {
             //     var result = MessageBox.Show("Unsaved data will be lost. Continue?", "Warning", 
@@ -124,7 +117,7 @@ namespace FlexiPane.Samples.DefaultApp
 #if DEBUG
             Debug.WriteLine($"[MainWindow] LastPaneClosing - Last pane: {e.Pane?.GetHashCode()}");
 #endif
-            // 마지막 패널 닫기 시도 - 사용자에게 확인
+            // Attempting to close last panel - confirm with user
             var result = MessageBox.Show(
                 "This is the last remaining panel. Closing it will clear all content.\nDo you want to continue?", 
                 "Confirm Last Panel Close", 
@@ -133,9 +126,9 @@ namespace FlexiPane.Samples.DefaultApp
             
             if (result == MessageBoxResult.No)
             {
-                e.Cancel = true; // 닫기 취소
+                e.Cancel = true; // Cancel close
             }
-            // Yes를 선택하면 e.Cancel = false (기본값)이므로 패널이 닫힘
+            // If Yes is selected, e.Cancel = false (default) so the panel closes
         }
 
         private void OnNewPaneCreated(object? sender, NewPaneCreatedEventArgs e)
@@ -143,11 +136,11 @@ namespace FlexiPane.Samples.DefaultApp
 #if DEBUG
             Debug.WriteLine($"[MainWindow] New pane created - NewPane: {e.NewPane?.GetHashCode()}, SourcePane: {e.SourcePane?.GetHashCode()}");
 #endif
-            // 새로 생성된 패널에 대한 추가 설정
-            // 예: 이벤트 핸들러 연결, 초기화 등
+            // Additional settings for newly created panel
+            // e.g., connect event handlers, initialization, etc.
             if (e.NewPane != null)
             {
-                // 패널 카운터 증가 (UI 업데이트용)
+                // Increment panel counter (for UI update)
                 UpdateUI();
             }
         }
@@ -157,10 +150,10 @@ namespace FlexiPane.Samples.DefaultApp
 #if DEBUG
             Debug.WriteLine($"[MainWindow] Split mode changed - IsActive: {e.IsActive}, OldValue: {e.OldValue}");
 #endif
-            // 분할 모드 변경에 대한 추가 처리
-            // 예: UI 업데이트, 도구 모음 활성화/비활성화 등
+            // Additional processing for split mode changes
+            // e.g., UI updates, toolbar enable/disable, etc.
             
-            // 특정 조건에서 변경을 취소할 수도 있음
+            // Can cancel the change under certain conditions
             // if (HasUnsavedChanges && e.IsActive)
             // {
             //     var result = MessageBox.Show("Enabling split mode will reset the layout. Continue?", 
@@ -182,7 +175,7 @@ namespace FlexiPane.Samples.DefaultApp
             Debug.WriteLine($"[MainWindow] CreateNewPaneContent called - Creating pane #{_paneCounter}");
 #endif
             
-            // 빨간색 배경으로 테스트
+            // Test with red background
             var border = new Border
             {
                 Background = GenerateRandomBrush(),
@@ -224,14 +217,14 @@ namespace FlexiPane.Samples.DefaultApp
 
         private Brush GenerateRandomBrush()
         {
-            // 랜덤 색상 생성
+            // Generate random color
             var r = _random.Next(0, 256);
             var g = _random.Next(0, 256);
             var b = _random.Next(0, 256);
             return new SolidColorBrush(Color.FromRgb((byte)r, (byte)g, (byte)b));
         }
 
-        // HandlePaneSplit 메서드도 더 이상 필요없음 - FlexiPaneManager가 자동 처리
+        // HandlePaneSplit method is no longer needed - FlexiPaneManager handles it automatically
 
         private void UpdateUI()
         {
@@ -240,7 +233,7 @@ namespace FlexiPane.Samples.DefaultApp
             SplitVerticalButton.IsEnabled = activePane?.CanSplit == true;
             SplitHorizontalButton.IsEnabled = activePane?.CanSplit == true;
             
-            // FlexiPanel 상태를 기반으로 버튼 텍스트 설정
+            // Set button text based on FlexiPanel state
             ToggleSplitModeButton.Content = FlexiPanel.IsSplitModeActive ? "Split Mode OFF" : "Split Mode ON";
         }
 

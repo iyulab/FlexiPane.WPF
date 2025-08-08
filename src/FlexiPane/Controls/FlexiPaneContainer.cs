@@ -7,8 +7,8 @@ using System.Windows.Media;
 namespace FlexiPane.Controls
 {
     /// <summary>
-    /// 2개의 자식을 가지는 분할 컨테이너
-    /// Grid + GridSplitter로 분할하여 관리
+    /// Split container that holds two children
+    /// Manages splitting using Grid + GridSplitter
     /// </summary>
     [TemplatePart(Name = "PART_ContainerGrid", Type = typeof(Grid))]
     public class FlexiPaneContainer : Control, IDisposable
@@ -25,7 +25,7 @@ namespace FlexiPane.Controls
         #region Dependency Properties
 
         /// <summary>
-        /// 첫 번째 자식 (왼쪽 또는 상단)
+        /// First child (left or top)
         /// </summary>
         public UIElement FirstChild
         {
@@ -38,7 +38,7 @@ namespace FlexiPane.Controls
                 new PropertyMetadata(null, OnChildChanged));
 
         /// <summary>
-        /// 두 번째 자식 (오른쪽 또는 하단)
+        /// Second child (right or bottom)
         /// </summary>
         public UIElement SecondChild
         {
@@ -51,7 +51,7 @@ namespace FlexiPane.Controls
                 new PropertyMetadata(null, OnChildChanged));
 
         /// <summary>
-        /// 분할 방향 (true: 수직분할/좌우, false: 수평분할/상하)
+        /// Split direction (true: vertical split/left-right, false: horizontal split/top-bottom)
         /// </summary>
         public bool IsVerticalSplit
         {
@@ -64,7 +64,7 @@ namespace FlexiPane.Controls
                 new PropertyMetadata(true, OnLayoutPropertyChanged));
 
         /// <summary>
-        /// 분할 비율 (0.1 ~ 0.9)
+        /// Split ratio (0.1 ~ 0.9)
         /// </summary>
         public double SplitRatio
         {
@@ -77,7 +77,7 @@ namespace FlexiPane.Controls
                 new PropertyMetadata(0.5, OnLayoutPropertyChanged, CoerceSplitRatio));
 
         /// <summary>
-        /// GridSplitter 두께
+        /// GridSplitter thickness
         /// </summary>
         public double SplitterThickness
         {
@@ -148,7 +148,7 @@ namespace FlexiPane.Controls
         #region Layout Management
 
         /// <summary>
-        /// 컨테이너 레이아웃 업데이트
+        /// Update container layout
         /// </summary>
         private new void UpdateLayout()
         {
@@ -197,7 +197,7 @@ namespace FlexiPane.Controls
 
         private void SetupVerticalSplit()
         {
-            // 컬럼 정의: 첫 번째 | 스플리터 | 두 번째
+            // Column definition: first | splitter | second
             _containerGrid!.ColumnDefinitions.Add(new ColumnDefinition 
             { 
                 Width = new GridLength(SplitRatio, GridUnitType.Star) 
@@ -211,7 +211,7 @@ namespace FlexiPane.Controls
                 Width = new GridLength(1 - SplitRatio, GridUnitType.Star) 
             });
 
-            // 첫 번째 자식
+            // First child
             Grid.SetColumn(FirstChild, 0);
             _containerGrid!.Children.Add(FirstChild);
 
@@ -220,14 +220,14 @@ namespace FlexiPane.Controls
             Grid.SetColumn(splitter, 1);
             _containerGrid!.Children.Add(splitter);
 
-            // 두 번째 자식
+            // Second child
             Grid.SetColumn(SecondChild, 2);
             _containerGrid!.Children.Add(SecondChild);
         }
 
         private void SetupHorizontalSplit()
         {
-            // 로우 정의: 첫 번째 | 스플리터 | 두 번째
+            // Row definition: first | splitter | second
             _containerGrid!.RowDefinitions.Add(new RowDefinition 
             { 
                 Height = new GridLength(SplitRatio, GridUnitType.Star) 
@@ -241,7 +241,7 @@ namespace FlexiPane.Controls
                 Height = new GridLength(1 - SplitRatio, GridUnitType.Star) 
             });
 
-            // 첫 번째 자식
+            // First child
             Grid.SetRow(FirstChild, 0);
             _containerGrid!.Children.Add(FirstChild);
 
@@ -250,7 +250,7 @@ namespace FlexiPane.Controls
             Grid.SetRow(splitter, 1);
             _containerGrid!.Children.Add(splitter);
 
-            // 두 번째 자식
+            // Second child
             Grid.SetRow(SecondChild, 2);
             _containerGrid!.Children.Add(SecondChild);
         }
@@ -264,7 +264,7 @@ namespace FlexiPane.Controls
                 Background = new SolidColorBrush(Color.FromRgb(220, 220, 220)),
                 BorderBrush = new SolidColorBrush(Color.FromRgb(180, 180, 180)),
                 ShowsPreview = true,
-                ToolTip = "드래그하여 분할 크기 조정"
+                ToolTip = "Drag to resize split"
             };
 
             if (isVertical)
@@ -297,7 +297,7 @@ namespace FlexiPane.Controls
             {
                 _isDisposed = true;
                 
-                // 자식 요소들 정리
+                // Clean up child elements
                 if (_containerGrid != null)
                 {
                     _containerGrid.Children.Clear();
@@ -305,7 +305,7 @@ namespace FlexiPane.Controls
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"FlexiPaneContainer Dispose 오류: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"FlexiPaneContainer Dispose error: {ex.Message}");
             }
         }
 

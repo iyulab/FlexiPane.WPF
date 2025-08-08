@@ -194,10 +194,10 @@ namespace FlexiPane.Controls
                     return;
                 }
                 
-                // Attached Property에 전파
+                // Propagate to Attached Property
                 SetIsSplitModeActive(panel, (bool)e.NewValue);
                 
-                // RootContent와 하위 요소들에게도 전파
+                // Also propagate to RootContent and child elements
                 if (panel.RootContent != null)
                 {
                     PropagateAttachedPropertyRecursively(panel.RootContent, IsSplitModeActiveProperty, e.NewValue);
@@ -209,10 +209,10 @@ namespace FlexiPane.Controls
         {
             if (d is FlexiPanel panel)
             {
-                // Attached Property에 전파
+                // Propagate to Attached Property
                 SetShowCloseButtons(panel, (bool)e.NewValue);
                 
-                // RootContent와 하위 요소들에게도 전파
+                // Also propagate to RootContent and child elements
                 if (panel.RootContent != null)
                 {
                     PropagateAttachedPropertyRecursively(panel.RootContent, ShowCloseButtonsProperty, e.NewValue);
@@ -224,7 +224,7 @@ namespace FlexiPane.Controls
         {
             if (d is FlexiPanel panel && e.NewValue is UIElement newContent)
             {
-                // 새 콘텐츠와 하위 요소들에 현재 상태 적용
+                // Apply current state to new content and child elements
                 PropagateAttachedPropertyRecursively(newContent, IsSplitModeActiveProperty, panel.IsSplitModeActive);
                 PropagateAttachedPropertyRecursively(newContent, ShowCloseButtonsProperty, panel.ShowCloseButtons);
             }
@@ -235,7 +235,7 @@ namespace FlexiPane.Controls
         #region Routed Events
 
         /// <summary>
-        /// 패널 분할 요청 이벤트
+        /// Panel split request event
         /// </summary>
         public static readonly RoutedEvent PaneSplitRequestedEvent =
             EventManager.RegisterRoutedEvent("PaneSplitRequested", RoutingStrategy.Bubble,
@@ -248,7 +248,7 @@ namespace FlexiPane.Controls
         }
 
         /// <summary>
-        /// 패널 닫기 이벤트
+        /// Panel closing event
         /// </summary>
         public static readonly RoutedEvent PaneClosingEvent =
             EventManager.RegisterRoutedEvent("PaneClosing", RoutingStrategy.Bubble,
@@ -261,7 +261,7 @@ namespace FlexiPane.Controls
         }
 
         /// <summary>
-        /// 마지막 패널 닫기 이벤트
+        /// Last panel closing event
         /// </summary>
         public static readonly RoutedEvent LastPaneClosingEvent =
             EventManager.RegisterRoutedEvent("LastPaneClosing", RoutingStrategy.Bubble,
@@ -274,7 +274,7 @@ namespace FlexiPane.Controls
         }
 
         /// <summary>
-        /// 분할 모드 변경 이벤트
+        /// Split mode changed event
         /// </summary>
         public static readonly RoutedEvent SplitModeChangedEvent =
             EventManager.RegisterRoutedEvent("SplitModeChanged", RoutingStrategy.Bubble,
@@ -287,7 +287,7 @@ namespace FlexiPane.Controls
         }
 
         /// <summary>
-        /// 새 패널 생성 이벤트
+        /// New panel created event
         /// </summary>
         public static readonly RoutedEvent NewPaneCreatedEvent =
             EventManager.RegisterRoutedEvent("NewPaneCreated", RoutingStrategy.Bubble,
@@ -310,14 +310,14 @@ namespace FlexiPane.Controls
             System.Diagnostics.Debug.WriteLine($"[FlexiPanel] NewContent already set: {e.NewContent != null} (Type: {e.NewContent?.GetType().Name ?? "null"})");
 #endif
             
-            // 이벤트가 이미 처리되었으면 건너뛰기
+            // Skip if event is already handled
             if (e.Handled)
                 return;
             
-            // Dispatcher를 사용하여 다른 핸들러들이 먼저 실행될 수 있도록 지연 처리
+            // Use Dispatcher to delay processing so other handlers can execute first
             Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, new Action(() =>
             {
-                // 이벤트가 취소되었거나 이미 처리되었으면 건너뛰기
+                // Skip if event is cancelled or already handled
                 if (e.Cancel || e.Handled)
                     return;
                     
@@ -325,7 +325,7 @@ namespace FlexiPane.Controls
                 System.Diagnostics.Debug.WriteLine($"[FlexiPanel] DELAYED PROCESSING - NewContent type after other handlers: {e.NewContent?.GetType().Name ?? "null"}");
 #endif
                 
-                // FlexiPaneManager의 분할 처리 메서드 호출
+                // Call FlexiPaneManager's split processing method
                 if (e.SourcePane != null && !e.Cancel)
                 {
                     var result = Managers.FlexiPaneManager.SplitPane(
@@ -358,17 +358,17 @@ namespace FlexiPane.Controls
             System.Diagnostics.Debug.WriteLine($"[FlexiPanel] OnPaneClosing - Processing close request for pane");
 #endif
 
-            // FlexiPaneManager를 통한 실제 닫기 처리
+            // Actual close processing through FlexiPaneManager
             if (e.Pane != null)
             {
-                // 먼저 총 패널 수 확인
+                // First check total panel count
                 var totalPanes = CountTotalPanes();
                 if (totalPanes <= 1)
                 {
 #if DEBUG
                     System.Diagnostics.Debug.WriteLine($"[FlexiPanel] Last panel closing. Current count: {totalPanes}");
 #endif
-                    // 마지막 패널 닫기 이벤트 발생
+                    // Raise last panel closing event
                     var lastPaneArgs = new LastPaneClosingEventArgs(e.Pane, e.Reason)
                     {
                         RoutedEvent = LastPaneClosingEvent
@@ -377,12 +377,12 @@ namespace FlexiPane.Controls
                     
                     if (lastPaneArgs.Cancel)
                     {
-                        // 외부에서 취소 요청
+                        // External cancellation request
                         e.Cancel = true;
                         return;
                     }
                     
-                    // 마지막 패널도 닫기 허용 (콘텐츠 제거)
+                    // Allow closing last panel (remove content)
                     RootContent = null!;
 #if DEBUG
                     System.Diagnostics.Debug.WriteLine($"[FlexiPanel] Last panel closed - RootContent cleared");
@@ -390,7 +390,7 @@ namespace FlexiPane.Controls
                     return;
                 }
 
-                // 패널이 2개 이상인 경우 닫기 처리
+                // Process close when there are 2 or more panels
                 var parentContainer = Managers.FlexiPaneManager.FindDirectParentContainer(e.Pane);
                 if (parentContainer != null)
                 {
@@ -414,13 +414,13 @@ namespace FlexiPane.Controls
                 }
                 else
                 {
-                    // RootContent가 단일 FlexiPaneItem인 경우
+                    // When RootContent is a single FlexiPaneItem
                     if (RootContent == e.Pane)
                     {
 #if DEBUG
                         System.Diagnostics.Debug.WriteLine($"[FlexiPanel] Single pane is RootContent - triggering LastPaneClosing");
 #endif
-                        // 마지막 패널 닫기 이벤트 발생
+                        // Raise last panel closing event
                         var lastPaneArgs = new LastPaneClosingEventArgs(e.Pane, e.Reason)
                         {
                             RoutedEvent = LastPaneClosingEvent
@@ -433,7 +433,7 @@ namespace FlexiPane.Controls
                             return;
                         }
                         
-                        // 마지막 패널 닫기 허용
+                        // Allow closing last panel
                         RootContent = null!;
 #if DEBUG
                         System.Diagnostics.Debug.WriteLine($"[FlexiPanel] Last panel closed - RootContent cleared");
@@ -543,7 +543,7 @@ namespace FlexiPane.Controls
         }
 
         /// <summary>
-        /// 전체 패널 개수 세기
+        /// Count total number of panels
         /// </summary>
         public int CountTotalPanes()
         {
@@ -594,7 +594,7 @@ namespace FlexiPane.Controls
         }
 
         /// <summary>
-        /// RootContent를 새 콘텐츠로 교체
+        /// Replace RootContent with new content
         /// </summary>
         internal void UpdateRootContent(UIElement newContent)
         {
@@ -602,16 +602,16 @@ namespace FlexiPane.Controls
         }
 
         /// <summary>
-        /// Attached Property를 하위 요소들에게 재귀적으로 전파
+        /// Recursively propagate Attached Property to child elements
         /// </summary>
         private static void PropagateAttachedPropertyRecursively(UIElement element, DependencyProperty property, object value)
         {
             if (element == null) return;
             
-            // 현재 요소에 설정
+            // Set on current element
             element.SetValue(property, value);
 
-            // 하위 요소들에게 재귀적으로 전파
+            // Recursively propagate to child elements
             switch (element)
             {
                 case FlexiPaneContainer container:
