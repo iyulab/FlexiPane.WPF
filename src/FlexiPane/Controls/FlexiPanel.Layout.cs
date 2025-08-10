@@ -137,7 +137,6 @@ namespace FlexiPane.Controls
             
             // Exit split mode
             IsSplitModeActive = false;
-            ShowCloseButtons = false;
             
             // Create default initial pane
             var defaultPane = new FlexiPaneItem

@@ -34,8 +34,8 @@ namespace FlexiPane.Samples.DefaultApp
 #endif
             
             // Subscribe to FlexiPanel events
-            FlexiPanel.AddHandler(FlexiPanel.PaneSplitRequestedEvent, 
-                new PaneSplitRequestedEventHandler(OnFlexiPanelPaneSplitRequested), false);
+            FlexiPanel.AddHandler(FlexiPanel.ContentRequestedEvent, 
+                new ContentRequestedEventHandler(OnFlexiPanelContentRequested), false);
             
             FlexiPanel.LastPaneClosing += OnLastPaneClosing;
             FlexiPanel.PaneClosing += OnFlexiPanelPaneClosing;
@@ -57,7 +57,6 @@ namespace FlexiPane.Samples.DefaultApp
                 if (FlexiPanel != null)
                 {
                     Debug.WriteLine($"[MainWindow] FlexiPanel IsSplitModeActive: {FlexiPanel.IsSplitModeActive}");
-                    Debug.WriteLine($"[MainWindow] FlexiPanel ShowCloseButtons: {FlexiPanel.ShowCloseButtons}");
                     Debug.WriteLine($"[MainWindow] About to call CountTotalPanes...");
                     var paneCount = FlexiPanel.CountTotalPanes();
                     Debug.WriteLine($"[MainWindow] Total panes: {paneCount}");
@@ -489,11 +488,10 @@ FlexiPane.WPF ready.",
             Debug.WriteLine($"[MainWindow] ToggleSplitModeButton_Click");
 #endif
             FlexiPanel.IsSplitModeActive = !FlexiPanel.IsSplitModeActive;
-            // ShowCloseButtons is now automatically synced with IsSplitModeActive in FlexiPanel
+            // Close buttons now always visible when split mode is active
             
 #if DEBUG
             Debug.WriteLine($"[MainWindow] FlexiPanel split mode set to: {FlexiPanel.IsSplitModeActive}");
-            Debug.WriteLine($"[MainWindow] FlexiPanel show close buttons auto-synced to: {FlexiPanel.ShowCloseButtons}");
 #endif
             
             UpdateUI();
@@ -699,14 +697,31 @@ FlexiPane.WPF ready.",
             }
         }
 
-        private void OnFlexiPanelPaneSplitRequested(object? sender, PaneSplitRequestedEventArgs e)
+        private void OnFlexiPanelContentRequested(object? sender, ContentRequestedEventArgs e)
         {
 #if DEBUG
-            Debug.WriteLine($"[MainWindow] FlexiPanel PaneSplitRequested - IsVertical: {e.IsVerticalSplit}, Ratio: {e.SplitRatio}");
+            Debug.WriteLine($"[MainWindow] FlexiPanel ContentRequested - RequestType: {e.RequestType}, Purpose: {e.Purpose}");
 #endif
             
-            // Provide new content for the split
-            e.NewContent = CreateDefaultContent();
+            if (e.RequestType == ContentRequestType.SplitPane)
+            {
+#if DEBUG
+                Debug.WriteLine($"[MainWindow] Split request - IsVertical: {e.IsVerticalSplit}, Ratio: {e.SplitRatio}");
+#endif
+                // Provide new content for the split
+                e.RequestedContent = CreateDefaultContent();
+            }
+            else if (e.RequestType == ContentRequestType.InitialPane)
+            {
+#if DEBUG
+                Debug.WriteLine($"[MainWindow] Initial content request");
+#endif
+                // Provide initial content if needed
+                if (e.RequestedContent == null)
+                {
+                    e.RequestedContent = CreateDefaultContent();
+                }
+            }
         }
 
         private void OnFlexiPanelPaneClosing(object? sender, PaneClosingEventArgs e)

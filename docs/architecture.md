@@ -54,9 +54,10 @@ Static manager class that handles splitting and removal logic.
 
 ### Core Events
 
-**PaneSplitRequestedEventArgs**
-- Event data raised when split is requested
-- Contains source panel, split direction, ratio information
+**ContentRequestedEventArgs** (Unified Event)
+- Event data raised when content is requested (initial or split)
+- Contains RequestType (InitialPane or SplitPane)
+- For split requests: includes source panel, split direction, ratio information
 - Cancelable event with custom content support
 
 **PaneClosingEventArgs**
@@ -144,8 +145,8 @@ flexiPanel.SplitSelectedHorizontally(0.5, customContent);
 ```
 
 ### Event-Driven Customization
-Handle events to customize split behavior and content:
-- PaneSplitRequested - Provide custom content for new panes
+Handle events to customize behavior and content:
+- ContentRequested - Provide custom content for both initial and split panes (unified event)
 - PaneClosing - Validate close operations
 - LastPaneClosing - Handle last panel scenarios
 - NewPaneCreated - Initialize new panels

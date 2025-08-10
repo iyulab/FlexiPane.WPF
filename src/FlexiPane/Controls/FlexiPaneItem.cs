@@ -511,10 +511,10 @@ namespace FlexiPane.Controls
 
         private void ExecuteClose(object? parameter)
         {
-            var showCloseButtons = FlexiPanel.GetShowCloseButtons(this);
+            var isSplitModeActive = FlexiPanel.GetIsSplitModeActive(this);
             
 #if DEBUG
-            Debug.WriteLine($"[FlexiPaneItem] ExecuteClose called - ShowCloseButtons: {showCloseButtons}, IsDisposed: {_isDisposed}");
+            Debug.WriteLine($"[FlexiPaneItem] ExecuteClose called - IsSplitModeActive: {isSplitModeActive}, IsDisposed: {_isDisposed}");
 #endif
             
             var args = new PaneClosingEventArgs(this, PaneCloseReason.UserRequest);
@@ -535,7 +535,7 @@ namespace FlexiPane.Controls
 
         private bool CanExecuteClose(object? parameter)
         {
-            return FlexiPanel.GetShowCloseButtons(this) && !_isDisposed;
+            return FlexiPanel.GetIsSplitModeActive(this) && !_isDisposed;
         }
 
         private void RequestSplit(bool isVerticalSplit, double splitRatio = 0.5)
@@ -552,7 +552,7 @@ namespace FlexiPane.Controls
             Debug.WriteLine($"[FlexiPaneItem] CREATING SPLIT EVENT - IsVertical: {isVerticalSplit}, Ratio: {splitRatio:F2}");
 #endif
 
-            var args = new PaneSplitRequestedEventArgs(this, isVerticalSplit, splitRatio);
+            var args = new ContentRequestedEventArgs(this, isVerticalSplit, splitRatio);
             OnSplitRequested(args);
         }
 
@@ -578,9 +578,9 @@ namespace FlexiPane.Controls
         {
             if (!CanSplit) return;
             
-            var args = new PaneSplitRequestedEventArgs(this, isVerticalSplit, splitRatio)
+            var args = new ContentRequestedEventArgs(this, isVerticalSplit, splitRatio)
             {
-                NewContent = newContent
+                RequestedContent = newContent
             };
             OnSplitRequested(args);
         }
@@ -590,13 +590,13 @@ namespace FlexiPane.Controls
 
         #region Protected Methods
 
-        protected virtual void OnSplitRequested(PaneSplitRequestedEventArgs e)
+        protected virtual void OnSplitRequested(ContentRequestedEventArgs e)
         {
 #if DEBUG
-            Debug.WriteLine($"[FlexiPaneItem] RAISING SPLIT EVENT - Routing to FlexiPanel");
+            Debug.WriteLine($"[FlexiPaneItem] RAISING CONTENT REQUEST EVENT - Routing to FlexiPanel");
 #endif
             // Bubble up to FlexiPanel's Routed Event
-            e.RoutedEvent = FlexiPanel.PaneSplitRequestedEvent;
+            e.RoutedEvent = FlexiPanel.ContentRequestedEvent;
             RaiseEvent(e);
         }
 

@@ -27,6 +27,6 @@
       Grid.Row="1"
       IsSplitModeActive="{Binding ElementName=ModeToggleButton, Path=IsChecked, Mode=OneWay, FallbackValue=False, UpdateSourceTrigger=PropertyChanged}" 
       ContentRequested="OnContentRequested"
-      PaneSplitRequested="OnPaneSplitRequested" />
+      />
   </Grid>
 </Window>

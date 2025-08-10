@@ -69,32 +69,24 @@ public partial class MainWindowSimple : Window
 
     private void OnContentRequested(object? sender, FlexiPane.Events.ContentRequestedEventArgs e)
     {
-        System.Diagnostics.Debug.WriteLine($"🎯 OnContentRequested CALLED! Purpose: {e.Purpose}");
+        System.Diagnostics.Debug.WriteLine($"🎯 OnContentRequested CALLED! RequestType: {e.RequestType}, Purpose: {e.Purpose}");
         
-        // 초기 콘텐츠, 초기 패널이나 새 패널을 위한 컨텐츠 생성
-        if (e.Purpose == "InitialContent" || e.Purpose == "InitialPane" || e.RequestedContent == null)
+        if (e.RequestType == FlexiPane.Events.ContentRequestType.SplitPane)
+        {
+            System.Diagnostics.Debug.WriteLine($"   - Split request - IsVertical: {e.IsVerticalSplit}, Ratio: {e.SplitRatio}");
+        }
+        
+        // 초기 콘텐츠, 초기 패널이나 새 패널을 위한 콘텐츠 생성
+        if (e.RequestedContent == null)
         {
             // CreateNewContent()에서 Border를 반환 - FlexiPanel에서 FlexiPaneItem으로 래핑할 것
             e.RequestedContent = CreateNewContent();
             e.Handled = true;
-            System.Diagnostics.Debug.WriteLine($"   - CreateNewContent() called for {e.Purpose}! Returned Type: {e.RequestedContent?.GetType().Name}");
+            System.Diagnostics.Debug.WriteLine($"   - CreateNewContent() called for {e.RequestType}/{e.Purpose}! Returned Type: {e.RequestedContent?.GetType().Name}");
             System.Diagnostics.Debug.WriteLine($"   - FlexiPanel will wrap this in FlexiPaneItem for splitting capability");
         }
     }
 
-    private void OnPaneSplitRequested(object? sender, PaneSplitRequestedEventArgs e)
-    {
-        System.Diagnostics.Debug.WriteLine("🔥 OnPaneSplitRequested CALLED!");
-        System.Diagnostics.Debug.WriteLine($"   - IsVertical: {e.IsVerticalSplit}, Ratio: {e.SplitRatio}");
-        System.Diagnostics.Debug.WriteLine($"   - NewContent is null: {e.NewContent == null}");
-        
-        // 새 패널을 위한 컨텐츠가 아직 없다면 CreateNewContent() 호출
-        if (e.NewContent == null)
-        {
-            e.NewContent = CreateNewContent();
-            System.Diagnostics.Debug.WriteLine("   - CreateNewContent() called, NewContent set");
-        }
-    }
 
     public object CreateNewContent()
     {

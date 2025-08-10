@@ -22,7 +22,7 @@ A modern and flexible WPF screen splitting library for dynamic pane management. 
 - 🎮 **Programmatic Control** - Built-in methods for splitting selected panels
 - 🎯 **Focus & Selection** - Automatic focus tracking and visual selection indicators
 - 📐 **Flexible Layouts** - Support for complex nested split arrangements that persist
-- 🔌 **Event-Driven Architecture** - Rich event system with ContentRequested and PaneSplitRequested
+- 🔌 **Event-Driven Architecture** - Unified ContentRequested event system
 - 🎨 **Automatic Content Wrapping** - Any UIElement gets automatically wrapped for splitting capability
 - ⚡ **High Performance** - Pure WPF implementation with optimized rendering
 - 🛡️ **Safe Mode Toggling** - Split mode can be toggled on/off without losing existing layouts
@@ -77,42 +77,47 @@ Use the simplest possible configuration for basic split functionality:
     Grid.Row="1"
     IsSplitModeActive="{Binding ElementName=ModeToggleButton, Path=IsChecked}"
     ContentRequested="OnContentRequested"
-    PaneSplitRequested="OnPaneSplitRequested" />
+    />
 </Grid>
 ```
 
-### Event-Driven Content Generation
+### Unified Event-Driven Content Generation
 
-The panel uses an event-driven architecture for content creation:
+The panel uses a unified event-driven architecture for all content requests:
 
 ```csharp
-// Handle initial content creation
+// Handle all content requests - both initial and split operations
 private void OnContentRequested(object sender, ContentRequestedEventArgs e)
 {
-    if (e.Purpose == "InitialContent" || e.Purpose == "InitialPane")
+    // Handle initial panel content
+    if (e.RequestType == ContentRequestType.InitialPane)
     {
-        // Create your custom content - can be any UIElement
         e.RequestedContent = new Border
         {
             Background = Brushes.LightBlue,
             Child = new TextBlock
             {
-                Text = $"Panel {DateTime.Now:HH:mm:ss}",
+                Text = $"Initial Panel {DateTime.Now:HH:mm:ss}",
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center
             }
         };
         e.Handled = true;
     }
-}
-
-// Handle split operations
-private void OnPaneSplitRequested(object sender, PaneSplitRequestedEventArgs e)
-{
-    // Provide content for the new split panel
-    if (e.NewContent == null)
+    // Handle split panel content
+    else if (e.RequestType == ContentRequestType.SplitPane)
     {
-        e.NewContent = CreateNewPanelContent();
+        e.RequestedContent = new Border
+        {
+            Background = Brushes.LightGreen,
+            Child = new TextBlock
+            {
+                Text = $"Split Panel {DateTime.Now:HH:mm:ss}\nDirection: {(e.IsVerticalSplit == true ? "Vertical" : "Horizontal")}",
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center
+            }
+        };
+        e.Handled = true;
     }
 }
 ```
@@ -192,7 +197,7 @@ Or programmatically:
 
 ```csharp
 flexiPanel.IsSplitModeActive = true;
-flexiPanel.ShowCloseButtons = true;
+// Close buttons are automatically shown when split mode is active
 ```
 
 When split mode is active:
@@ -274,7 +279,7 @@ Check out the [FlexiPane.Samples.DefaultApp](src/FlexiPane.Samples.DefaultApp) p
 
 ### Simple Demo (MainWindowSimple.xaml)
 - ✨ **Minimal Setup**: Just a ToggleButton and FlexiPanel
-- 🎮 **Event-Driven Content**: Uses ContentRequested and PaneSplitRequested events
+- 🎮 **Event-Driven Content**: Uses unified ContentRequested event
 - 🎨 **Random Colored Panels**: Each panel gets a unique color and timestamp
 - 🛡️ **Safe Mode Toggling**: Toggle split mode on/off without losing panels
 - 🔄 **Automatic Content Wrapping**: Returns simple Border elements that get auto-wrapped
@@ -323,7 +328,7 @@ Built with modern WPF best practices and inspired by proven splitting mechanisms
 
 ### Current Version: v1.0.0
 - ✅ **Simple Integration**: Works with minimal XAML configuration
-- ✅ **Event-Driven Architecture**: ContentRequested and PaneSplitRequested events  
+- ✅ **Event-Driven Architecture**: Unified ContentRequested event system  
 - ✅ **Smart Split Mode**: Toggle on/off while preserving existing layouts
 - ✅ **Automatic Content Wrapping**: Any UIElement becomes splittable
 - ✅ **Layout Preservation**: Split mode toggling doesn't destroy content

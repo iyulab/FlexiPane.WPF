@@ -50,7 +50,7 @@
               </Border.Style>
             </Border>
 
-            <!--  Close button - Bound to FlexiPanel's ShowCloseButtons  -->
+            <!--  Close button - Always visible in split mode  -->
             <Button
               x:Name="PART_CloseButton"
               Width="24"
@@ -65,7 +65,7 @@
               Command="{TemplateBinding CloseCommand}"
               Cursor="Hand"
               ToolTip="Close Pane"
-              Visibility="{Binding Path=(controls:FlexiPanel.ShowCloseButtons), RelativeSource={RelativeSource Self}, Converter={StaticResource BooleanToVisibilityConverter}}">
+              Visibility="{Binding Path=(controls:FlexiPanel.IsSplitModeActive), RelativeSource={RelativeSource Self}, Converter={StaticResource BooleanToVisibilityConverter}}">
               <Button.Template>
                 <ControlTemplate TargetType="Button">
                   <Border

@@ -1086,47 +1086,6 @@ namespace FlexiPane.Managers
         #region Event Handlers
 
         /// <summary>
-        /// Handle panel split request event
-        /// </summary>
-        private static void OnPaneSplitRequested(object? sender, PaneSplitRequestedEventArgs e)
-        {
-#if DEBUG
-            Debug.WriteLine($"[FlexiPaneManager] OnPaneSplitRequested - Sender: {sender?.GetType().Name}, Cancel: {e.Cancel}");
-#endif
-
-            if (sender is not FlexiPaneItem sourcePane || e.Cancel)
-            {
-#if DEBUG
-                Debug.WriteLine($"[FlexiPaneManager] Split request ignored - ValidSender: {sender is FlexiPaneItem}, Cancel: {e.Cancel}");
-#endif
-                return;
-            }
-
-#if DEBUG
-            Debug.WriteLine($"[FlexiPaneManager] Processing split request - IsVertical: {e.IsVerticalSplit}, Ratio: {e.SplitRatio:F2}");
-#endif
-
-            // Perform automatic split
-            var result = SplitPane(sourcePane, e.IsVerticalSplit, e.SplitRatio, e.NewContent as UIElement);
-            
-            if (result == null)
-            {
-                // Mark split failure in event arguments
-                e.Cancel = true;
-#if DEBUG
-                Debug.WriteLine($"[FlexiPaneManager] Split failed - setting Cancel = true");
-#endif
-            }
-            else
-            {
-#if DEBUG
-                Debug.WriteLine($"[FlexiPaneManager] Split succeeded - Container created");
-#endif
-            }
-        }
-
-
-        /// <summary>
         /// Handle panel close completion event
         /// </summary>
         private static void OnPaneClosed(object? sender, PaneClosedEventArgs e)
