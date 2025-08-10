@@ -25,36 +25,11 @@ namespace FlexiPane.Controls
             AddHandler(PaneSplitRequestedEvent, new PaneSplitRequestedEventHandler(OnPaneSplitRequested), true);
             AddHandler(PaneClosingEvent, new PaneClosingEventHandler(OnPaneClosing), true);
             
-            // Initialize with default content if not provided
+            // Also handle Loaded for additional initialization
             Loaded += OnLoaded;
         }
-        
-        private void OnLoaded(object sender, RoutedEventArgs e)
-        {
-            // If no content is provided, create a default pane
-            if (RootContent == null)
-            {
-                var defaultPane = new FlexiPaneItem
-                {
-                    Title = "Main Panel",
-                    CanSplit = true,
-                    Content = CreateDefaultContent()
-                };
-                RootContent = defaultPane;
-            }
-            
-            // Select the first pane if none is selected
-            if (SelectedItem == null)
-            {
-                var firstPane = FindFirstSelectablePane();
-                if (firstPane != null)
-                {
-                    firstPane.IsSelected = true;
-                }
-            }
-        }
-        
-        private UIElement CreateDefaultContent()
+
+        private UIElement CreateSimpleInfoContent()
         {
             var border = new Border
             {
@@ -64,7 +39,7 @@ namespace FlexiPane.Controls
             
             var textBlock = new TextBlock
             {
-                Text = "FlexiPane - Dynamic Panel Splitter\n\nEnable split mode to start splitting panels.",
+                Text = "FlexiPane - Dynamic Panel Splitter\n\nClick 'Toggle Split Mode' to activate splitting functionality.",
                 FontSize = 14,
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
@@ -74,6 +49,146 @@ namespace FlexiPane.Controls
             
             border.Child = textBlock;
             return border;
+        }
+
+        private void OnLoaded(object sender, RoutedEventArgs e)
+        {
+            // Use Dispatcher to ensure bindings are fully established
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.DataBind, new Action(() =>
+            {
+#if DEBUG
+                System.Diagnostics.Debug.WriteLine($"[FlexiPanel] OnLoaded - RootContent is null: {RootContent == null}");
+                System.Diagnostics.Debug.WriteLine($"[FlexiPanel] OnLoaded - IsSplitModeActive: {IsSplitModeActive}");
+                if (RootContent != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[FlexiPanel] OnLoaded - Existing RootContent type: {RootContent.GetType().Name}");
+                }
+#endif
+                
+                // Try to get initial content from ContentRequested event now that handlers are connected
+                if (IsDefaultContent(RootContent))
+                {
+#if DEBUG
+                    System.Diagnostics.Debug.WriteLine($"[FlexiPanel] OnLoaded - Requesting initial content via ContentRequested event");
+#endif
+                    var contentEventArgs = new Events.ContentRequestedEventArgs("InitialContent")
+                    {
+                        RoutedEvent = ContentRequestedEvent
+                    };
+                    
+                    // Raise the event to get content from the application  
+                    RaiseEvent(contentEventArgs);
+                    
+                    // Use requested content if provided
+                    if (contentEventArgs.RequestedContent is UIElement requestedContent)
+                    {
+#if DEBUG
+                        System.Diagnostics.Debug.WriteLine($"[FlexiPanel] OnLoaded - Got content from event: {requestedContent.GetType().Name}");
+#endif
+                        
+                        // FlexiPaneItem이 아니면 자동으로 래핑
+                        if (requestedContent is FlexiPaneItem)
+                        {
+#if DEBUG
+                            System.Diagnostics.Debug.WriteLine($"[FlexiPanel] OnLoaded - Content is already FlexiPaneItem, using directly");
+#endif
+                            RootContent = requestedContent;
+                        }
+                        else
+                        {
+#if DEBUG
+                            System.Diagnostics.Debug.WriteLine($"[FlexiPanel] OnLoaded - Wrapping content in FlexiPaneItem for splitting capability");
+#endif
+                            var wrappedItem = new FlexiPaneItem
+                            {
+                                Title = "Main Panel",
+                                CanSplit = true,
+                                Content = requestedContent
+                            };
+                            RootContent = wrappedItem;
+                        }
+                    }
+                    else
+                    {
+#if DEBUG
+                        System.Diagnostics.Debug.WriteLine($"[FlexiPanel] OnLoaded - No content provided from event, keeping default");
+#endif
+                    }
+                }
+                
+                // Apply current split mode state to existing content if any
+                if (RootContent is FlexiPaneItem paneItem)
+                {
+                    // Propagate current split mode state
+                    SetIsSplitModeActive(paneItem, IsSplitModeActive);
+                    SetShowCloseButtons(paneItem, ShowCloseButtons);
+#if DEBUG
+                    System.Diagnostics.Debug.WriteLine($"[FlexiPanel] OnLoaded - Updated FlexiPaneItem split mode: {GetIsSplitModeActive(paneItem)}");
+#endif
+                    
+                    // Select this pane if none is selected
+                    if (SelectedItem == null)
+                    {
+                        paneItem.IsSelected = true;
+                    }
+                }
+            }));
+        }
+        
+        
+        private UIElement CreateSamplePaneContent(string title, Color backgroundColor)
+        {
+            var border = new Border
+            {
+                Background = new SolidColorBrush(backgroundColor),
+                Padding = new Thickness(20),
+                CornerRadius = new CornerRadius(4)
+            };
+            
+            var stackPanel = new StackPanel
+            {
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            
+            var titleBlock = new TextBlock
+            {
+                Text = title,
+                FontSize = 18,
+                FontWeight = FontWeights.Bold,
+                Foreground = Brushes.White,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Margin = new Thickness(0, 0, 0, 10)
+            };
+            
+            var instructionBlock = new TextBlock
+            {
+                Text = "Right-click or use keyboard shortcuts to split this pane",
+                FontSize = 12,
+                Foreground = Brushes.White,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                TextWrapping = TextWrapping.Wrap,
+                Opacity = 0.8
+            };
+            
+            stackPanel.Children.Add(titleBlock);
+            stackPanel.Children.Add(instructionBlock);
+            border.Child = stackPanel;
+            
+            return border;
+        }
+        
+        /// <summary>
+        /// Create auto-generated content for new panes when splitting
+        /// </summary>
+        private UIElement CreateAutoGeneratedPaneContent()
+        {
+            var random = new Random();
+            var colors = new[] { Colors.CornflowerBlue, Colors.SeaGreen, Colors.Coral, Colors.MediumPurple, Colors.Gold, Colors.LightSeaGreen };
+            var selectedColor = colors[random.Next(colors.Length)];
+            var paneNumber = CountTotalPanes() + 1;
+            
+            return CreateSamplePaneContent($"Panel {paneNumber}", selectedColor);
         }
 
         #region Attached Properties (Inheritable)
@@ -127,7 +242,21 @@ namespace FlexiPane.Controls
 
         public static readonly DependencyProperty IsSplitModeActiveInstanceProperty =
             DependencyProperty.Register("IsSplitModeActiveInstance", typeof(bool), typeof(FlexiPanel),
-                new PropertyMetadata(false, OnSplitModeChanged));
+                new PropertyMetadata(false, OnIsSplitModeActiveInstanceChanged));
+
+        private static void OnIsSplitModeActiveInstanceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is FlexiPanel panel)
+            {
+                bool isActive = (bool)e.NewValue;
+#if DEBUG
+                System.Diagnostics.Debug.WriteLine($"[FlexiPanel] IsSplitModeActive instance property changed: {isActive}");
+#endif
+                // Sync with attached property
+                SetIsSplitModeActive(panel, isActive);
+                panel.OnSplitModeChangedInternal(isActive);
+            }
+        }
 
         /// <summary>
         /// Global close button display state (instance property)
@@ -140,7 +269,18 @@ namespace FlexiPane.Controls
 
         public static readonly DependencyProperty ShowCloseButtonsInstanceProperty =
             DependencyProperty.Register("ShowCloseButtonsInstance", typeof(bool), typeof(FlexiPanel),
-                new PropertyMetadata(false, OnShowCloseButtonsChanged));
+                new PropertyMetadata(false, OnShowCloseButtonsInstanceChanged));
+
+        private static void OnShowCloseButtonsInstanceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is FlexiPanel panel)
+            {
+                bool showButtons = (bool)e.NewValue;
+                // Sync with attached property
+                SetShowCloseButtons(panel, showButtons);
+                panel.OnShowCloseButtonsChangedInternal(showButtons);
+            }
+        }
 
         /// <summary>
         /// Root content (FlexiPaneItem or FlexiPaneContainer)
@@ -167,6 +307,120 @@ namespace FlexiPane.Controls
         public static readonly DependencyProperty SelectedItemProperty =
             DependencyProperty.Register(nameof(SelectedItem), typeof(FlexiPaneItem), typeof(FlexiPanel),
                 new PropertyMetadata(null));
+
+        #endregion
+
+        #region Internal Property Handlers
+        
+        private void OnSplitModeChangedInternal(bool isActive)
+        {
+#if DEBUG
+            System.Diagnostics.Debug.WriteLine($"[FlexiPanel] Internal split mode changed: {isActive}");
+#endif
+            
+            // Raise event (cancellable)
+            var args = new SplitModeChangedEventArgs(isActive, !isActive)
+            {
+                RoutedEvent = SplitModeChangedEvent
+            };
+            RaiseEvent(args);
+            
+            if (args.Cancel)
+            {
+                // Cancel change - restore previous value
+                SetIsSplitModeActive(this, !isActive);
+                return;
+            }
+            
+            // Automatically sync ShowCloseButtons with IsSplitModeActive
+            SetShowCloseButtons(this, isActive);
+            
+            // When split mode is activated, ensure we have a splittable pane
+            if (isActive)
+            {
+                // Check if we already have any FlexiPaneItem (single or in container)
+                if (RootContent is FlexiPaneItem existingPane)
+                {
+#if DEBUG
+                    System.Diagnostics.Debug.WriteLine($"[FlexiPanel] Split mode activated - existing single FlexiPaneItem found, enabling split capability");
+#endif
+                    // Just enable splitting on existing pane
+                    existingPane.CanSplit = true;
+                    SetIsSplitModeActive(existingPane, true);
+                    SetShowCloseButtons(existingPane, ShowCloseButtons);
+                    
+                    // Select this pane if none is selected
+                    if (SelectedItem == null)
+                    {
+                        existingPane.IsSelected = true;
+                    }
+                }
+                else if (RootContent is FlexiPaneContainer)
+                {
+#if DEBUG
+                    System.Diagnostics.Debug.WriteLine($"[FlexiPanel] Split mode activated - existing FlexiPaneContainer found, enabling split capability on all panes");
+#endif
+                    // Enable splitting on all panes within the container
+                    EnableSplitModeRecursively(RootContent, true);
+                }
+                else
+                {
+#if DEBUG
+                    System.Diagnostics.Debug.WriteLine($"[FlexiPanel] Split mode activated - no suitable pane structure found, creating new one");
+#endif
+                    // Create new splittable pane only if we don't have one
+                    CreateSplittablePaneWithEvent();
+                }
+            }
+            else
+            {
+                // When split mode is deactivated, preserve existing structure but disable splitting
+                if (RootContent is FlexiPaneItem existingPane)
+                {
+#if DEBUG
+                    System.Diagnostics.Debug.WriteLine($"[FlexiPanel] Split mode deactivated - disabling split capability on single pane");
+#endif
+                    existingPane.CanSplit = false;
+                    SetIsSplitModeActive(existingPane, false);
+                    SetShowCloseButtons(existingPane, false);
+                }
+                else if (RootContent is FlexiPaneContainer)
+                {
+#if DEBUG
+                    System.Diagnostics.Debug.WriteLine($"[FlexiPanel] Split mode deactivated - preserving FlexiPaneContainer structure, disabling split capability on all panes");
+#endif
+                    // Preserve the container structure but disable splitting on all panes
+                    EnableSplitModeRecursively(RootContent, false);
+                }
+                else
+                {
+#if DEBUG
+                    System.Diagnostics.Debug.WriteLine($"[FlexiPanel] Split mode deactivated - no pane structure exists, showing info content");
+#endif
+                    // Show info content if no pane structure exists
+                    RootContent = CreateSimpleInfoContent();
+                }
+            }
+            
+            // Propagate to RootContent and child elements
+            if (RootContent != null)
+            {
+                PropagateAttachedPropertyRecursively(RootContent, IsSplitModeActiveProperty, isActive);
+            }
+        }
+        
+        private void OnShowCloseButtonsChangedInternal(bool showButtons)
+        {
+#if DEBUG
+            System.Diagnostics.Debug.WriteLine($"[FlexiPanel] Internal show close buttons changed: {showButtons}");
+#endif
+            
+            // Propagate to RootContent and child elements
+            if (RootContent != null)
+            {
+                PropagateAttachedPropertyRecursively(RootContent, ShowCloseButtonsProperty, showButtons);
+            }
+        }
 
         #endregion
 
@@ -238,6 +492,19 @@ namespace FlexiPane.Controls
         #endregion
 
         #region Routed Events
+
+        /// <summary>
+        /// Content request event
+        /// </summary>
+        public static readonly RoutedEvent ContentRequestedEvent =
+            EventManager.RegisterRoutedEvent("ContentRequested", RoutingStrategy.Bubble,
+                typeof(ContentRequestedEventHandler), typeof(FlexiPanel));
+
+        public event ContentRequestedEventHandler ContentRequested
+        {
+            add { AddHandler(ContentRequestedEvent, value); }
+            remove { RemoveHandler(ContentRequestedEvent, value); }
+        }
 
         /// <summary>
         /// Panel split request event
@@ -333,11 +600,22 @@ namespace FlexiPane.Controls
                 // Call FlexiPaneManager's split processing method
                 if (e.SourcePane != null && !e.Cancel)
                 {
+                    // Auto-generate content if none provided
+                    UIElement? contentToUse = e.NewContent as System.Windows.UIElement;
+                    if (contentToUse == null)
+                    {
+#if DEBUG
+                        System.Diagnostics.Debug.WriteLine($"[FlexiPanel] Auto-generating content for new pane");
+#endif
+                        contentToUse = CreateAutoGeneratedPaneContent();
+                        e.NewContent = contentToUse;
+                    }
+                    
                     var result = Managers.FlexiPaneManager.SplitPane(
                         e.SourcePane, 
                         e.IsVerticalSplit, 
                         e.SplitRatio, 
-                        e.NewContent as System.Windows.UIElement);
+                        contentToUse);
                     
                     if (result == null)
                     {
@@ -522,6 +800,165 @@ namespace FlexiPane.Controls
             }
             
             return null;
+        }
+        
+        #endregion
+
+        #region Content Management Methods
+        
+        /// <summary>
+        /// Create a splittable pane and request initial content
+        /// </summary>
+        private void CreateSplittablePaneWithEvent()
+        {
+#if DEBUG
+            System.Diagnostics.Debug.WriteLine($"[FlexiPanel] CreateSplittablePaneWithEvent - Requesting initial content");
+#endif
+            
+            // Request initial content from the application
+            var contentEventArgs = new Events.ContentRequestedEventArgs("InitialPane")
+            {
+                RoutedEvent = ContentRequestedEvent
+            };
+            
+#if DEBUG
+            System.Diagnostics.Debug.WriteLine($"[FlexiPanel] CreateSplittablePaneWithEvent - Raising ContentRequested for initial content");
+#endif
+            
+            // Raise the event to get content from the application  
+            RaiseEvent(contentEventArgs);
+            
+            // Handle the requested content with automatic wrapping if needed
+            FlexiPaneItem initialPane;
+            if (contentEventArgs.RequestedContent is UIElement requestedContent)
+            {
+#if DEBUG
+                System.Diagnostics.Debug.WriteLine($"[FlexiPanel] CreateSplittablePaneWithEvent - Got content from event: {requestedContent.GetType().Name}");
+#endif
+                
+                // FlexiPaneItem이면 그대로 사용, 아니면 래핑
+                if (requestedContent is FlexiPaneItem existingPane)
+                {
+#if DEBUG
+                    System.Diagnostics.Debug.WriteLine($"[FlexiPanel] CreateSplittablePaneWithEvent - Content is already FlexiPaneItem, using directly");
+#endif
+                    initialPane = existingPane;
+                    initialPane.CanSplit = true; // 분할 가능하도록 설정
+                }
+                else
+                {
+#if DEBUG
+                    System.Diagnostics.Debug.WriteLine($"[FlexiPanel] CreateSplittablePaneWithEvent - Wrapping content in FlexiPaneItem for splitting capability");
+#endif
+                    initialPane = new FlexiPaneItem
+                    {
+                        Title = "Main Panel",
+                        CanSplit = true,
+                        Content = requestedContent
+                    };
+                }
+            }
+            else
+            {
+#if DEBUG
+                System.Diagnostics.Debug.WriteLine($"[FlexiPanel] CreateSplittablePaneWithEvent - No content provided, using default");
+#endif
+                initialPane = new FlexiPaneItem
+                {
+                    Title = "Main Panel",
+                    CanSplit = true,
+                    Content = CreateSamplePaneContent("Default Content", Colors.CornflowerBlue)
+                };
+            }
+            
+            // Set split mode properties
+            SetIsSplitModeActive(initialPane, true);
+            SetShowCloseButtons(initialPane, ShowCloseButtons);
+            
+            // Set as root content
+            RootContent = initialPane;
+            initialPane.IsSelected = true;
+        }
+        
+        
+        /// <summary>
+        /// Check if the current content is a default content that can be replaced
+        /// </summary>
+        private bool IsDefaultContent(UIElement? content)
+        {
+            if (content == null) return true;
+            
+            // Check if it's a Border with the default text content
+            if (content is Border border && 
+                border.Background is SolidColorBrush brush &&
+                brush.Color == Color.FromRgb(245, 245, 245) &&
+                border.Child is TextBlock textBlock &&
+                textBlock.Text.Contains("FlexiPane - Dynamic Panel Splitter"))
+            {
+                return true;
+            }
+            
+            // Check if it's a default FlexiPaneItem with sample content
+            if (content is FlexiPaneItem paneItem &&
+                paneItem.Title == "Main Panel" &&
+                paneItem.Content is Border paneContent &&
+                paneContent.Background is SolidColorBrush paneBackground &&
+                paneBackground.Color == Colors.DodgerBlue)
+            {
+                return true;
+            }
+            
+            return false;
+        }
+        
+        
+        #endregion
+
+        #region Split Mode Management
+        
+        /// <summary>
+        /// Recursively enable or disable split mode on all FlexiPaneItem elements
+        /// </summary>
+        private void EnableSplitModeRecursively(UIElement? element, bool enableSplitMode)
+        {
+            if (element == null) return;
+            
+#if DEBUG
+            System.Diagnostics.Debug.WriteLine($"[FlexiPanel] EnableSplitModeRecursively - Element: {element.GetType().Name}, Enable: {enableSplitMode}");
+#endif
+            
+            switch (element)
+            {
+                case FlexiPaneItem paneItem:
+#if DEBUG
+                    System.Diagnostics.Debug.WriteLine($"[FlexiPanel] EnableSplitModeRecursively - Setting FlexiPaneItem CanSplit: {enableSplitMode}");
+#endif
+                    paneItem.CanSplit = enableSplitMode;
+                    SetIsSplitModeActive(paneItem, enableSplitMode);
+                    SetShowCloseButtons(paneItem, enableSplitMode ? ShowCloseButtons : false);
+                    
+                    // If enabling and no item is selected, select this one
+                    if (enableSplitMode && SelectedItem == null)
+                    {
+                        paneItem.IsSelected = true;
+                    }
+                    break;
+                    
+                case FlexiPaneContainer container:
+#if DEBUG
+                    System.Diagnostics.Debug.WriteLine($"[FlexiPanel] EnableSplitModeRecursively - Processing FlexiPaneContainer children");
+#endif
+                    // Recursively process both children
+                    EnableSplitModeRecursively(container.FirstChild, enableSplitMode);
+                    EnableSplitModeRecursively(container.SecondChild, enableSplitMode);
+                    break;
+                    
+                default:
+#if DEBUG
+                    System.Diagnostics.Debug.WriteLine($"[FlexiPanel] EnableSplitModeRecursively - Unknown element type: {element.GetType().Name}");
+#endif
+                    break;
+            }
         }
         
         #endregion

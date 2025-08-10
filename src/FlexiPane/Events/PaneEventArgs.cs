@@ -5,6 +5,11 @@ using FlexiPane.Controls;
 namespace FlexiPane.Events
 {
     /// <summary>
+    /// Content request event handler delegate
+    /// </summary>
+    public delegate void ContentRequestedEventHandler(object sender, ContentRequestedEventArgs e);
+
+    /// <summary>
     /// Panel split request event handler delegate
     /// </summary>
     public delegate void PaneSplitRequestedEventHandler(object sender, PaneSplitRequestedEventArgs e);
@@ -190,6 +195,32 @@ namespace FlexiPane.Events
         /// Source panel (if created by split)
         /// </summary>
         public FlexiPaneItem? SourcePane { get; }
+    }
+
+    /// <summary>
+    /// Content request event args - used when FlexiPanel needs content for initial panes
+    /// </summary>
+    public class ContentRequestedEventArgs : RoutedEventArgs
+    {
+        public ContentRequestedEventArgs(string purpose)
+        {
+            Purpose = purpose ?? throw new ArgumentNullException(nameof(purpose));
+        }
+
+        /// <summary>
+        /// Purpose of the content request (e.g., "InitialPane", "NewPane")
+        /// </summary>
+        public string Purpose { get; }
+
+        /// <summary>
+        /// Requested content - will be set by the event handler
+        /// </summary>
+        public object? RequestedContent { get; set; }
+
+        /// <summary>
+        /// Whether the request was handled
+        /// </summary>
+        public bool Handled { get; set; }
     }
 
     /// <summary>

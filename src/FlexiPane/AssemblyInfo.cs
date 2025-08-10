@@ -15,7 +15,6 @@ using System.Windows.Markup;
 [assembly: XmlnsDefinition("http://schemas.flexipane.com/wpf", "FlexiPane.Controls")]
 [assembly: XmlnsDefinition("http://schemas.flexipane.com/wpf", "FlexiPane.Events")]
 [assembly: XmlnsDefinition("http://schemas.flexipane.com/wpf", "FlexiPane.Serialization")]
-[assembly: XmlnsDefinition("http://schemas.flexipane.com/wpf", "FlexiPane.Converters")]
 [assembly: XmlnsDefinition("http://schemas.flexipane.com/wpf", "FlexiPane.Managers")]
 
 // Optional: Add a prefix recommendation
@@ -25,7 +24,6 @@ using System.Windows.Markup;
 [assembly: XmlnsDefinition("https://flexipane.wpf", "FlexiPane.Controls")]
 [assembly: XmlnsDefinition("https://flexipane.wpf", "FlexiPane.Events")]
 [assembly: XmlnsDefinition("https://flexipane.wpf", "FlexiPane.Serialization")]
-[assembly: XmlnsDefinition("https://flexipane.wpf", "FlexiPane.Converters")]
 [assembly: XmlnsDefinition("https://flexipane.wpf", "FlexiPane.Managers")]
 
 // Prefix for the shorter namespace
