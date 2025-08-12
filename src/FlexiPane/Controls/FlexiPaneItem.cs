@@ -37,8 +37,8 @@ namespace FlexiPane.Controls
         private Border? _contentBorder;
         private Grid? _splitOverlay;
         private Button? _closeButton;
-        private Line? _verticalGuideLine;
-        private Line? _horizontalGuideLine;
+        private Rectangle? _verticalGuideLine;
+        private Rectangle? _horizontalGuideLine;
         private Border? _defaultGuidePanel;
         private bool _currentSplitDirection = true; // true = vertical, false = horizontal
 
@@ -62,7 +62,7 @@ namespace FlexiPane.Controls
         #region Dependency Properties
         
         /// <summary>
-        /// Indicates whether this pane is currently selected/focused
+        /// Indicators whether this pane is currently selected/focused
         /// </summary>
         public bool IsSelected
         {
@@ -243,9 +243,18 @@ namespace FlexiPane.Controls
             _contentBorder = GetTemplateChild("PART_ContentBorder") as Border;
             _splitOverlay = GetTemplateChild("PART_SplitOverlay") as Grid;
             _closeButton = GetTemplateChild("PART_CloseButton") as Button;
-            _verticalGuideLine = GetTemplateChild("PART_VerticalGuideLine") as Line;
-            _horizontalGuideLine = GetTemplateChild("PART_HorizontalGuideLine") as Line;
+            _verticalGuideLine = GetTemplateChild("PART_VerticalGuideLine") as Rectangle;
+            _horizontalGuideLine = GetTemplateChild("PART_HorizontalGuideLine") as Rectangle;
             _defaultGuidePanel = GetTemplateChild("PART_DefaultGuidePanel") as Border;
+
+#if DEBUG
+            Debug.WriteLine($"[FlexiPaneItem] OnApplyTemplate - Template elements found:");
+            Debug.WriteLine($"   - ContainerGrid: {_containerGrid != null}");
+            Debug.WriteLine($"   - SplitOverlay: {_splitOverlay != null}");
+            Debug.WriteLine($"   - VerticalGuideLine: {_verticalGuideLine != null}");
+            Debug.WriteLine($"   - HorizontalGuideLine: {_horizontalGuideLine != null}");
+            Debug.WriteLine($"   - DefaultGuidePanel: {_defaultGuidePanel != null}");
+#endif
 
             // Connect event handlers
             ConnectEventHandlers();
@@ -253,9 +262,31 @@ namespace FlexiPane.Controls
             // Set keyboard focus
             this.Focusable = true;
             
-            // Watch for split mode changes
-            DependencyPropertyDescriptor.FromProperty(FlexiPanel.IsSplitModeActiveProperty, typeof(FlexiPaneItem))
-                ?.AddValueChanged(this, OnSplitModeChanged);
+            // Initialize split mode state when template is applied
+            InitializeSplitModeState();
+        }
+        
+        /// <summary>
+        /// Initialize split mode state when template is first applied or split mode becomes active
+        /// </summary>
+        private void InitializeSplitModeState()
+        {
+            var flexiPanel = FlexiPanel.FindAncestorPanel(this);
+            var isSplitModeActive = flexiPanel?.IsSplitModeActive ?? false;
+            
+            if (isSplitModeActive && _splitOverlay != null && _splitOverlay.Visibility == Visibility.Visible)
+            {
+                // Reset to default vertical split direction when split mode is activated
+                _currentSplitDirection = true;
+                UpdateSplitModeGuideText();
+                
+                // Set focus when split mode is activated
+                this.Focus();
+                Keyboard.Focus(this);
+#if DEBUG
+                Debug.WriteLine($"[FlexiPaneItem] Split mode state initialized - Focus set for ESC key handling, direction reset to VERTICAL");
+#endif
+            }
         }
 
         private void ConnectEventHandlers()
@@ -265,6 +296,11 @@ namespace FlexiPane.Controls
                 _splitOverlay.MouseLeftButtonUp += OnSplitOverlayClick;
                 _splitOverlay.MouseMove += OnSplitOverlayMouseMove;
                 _splitOverlay.MouseLeave += OnSplitOverlayMouseLeave;
+                _splitOverlay.MouseEnter += OnSplitOverlayMouseEnter;
+                _splitOverlay.IsVisibleChanged += OnSplitOverlayVisibilityChanged;
+#if DEBUG
+                Debug.WriteLine($"[FlexiPaneItem] Connected split overlay events - Visibility: {_splitOverlay.Visibility}");
+#endif
             }
 
             this.KeyDown += OnKeyDown;
@@ -281,15 +317,13 @@ namespace FlexiPane.Controls
                 _splitOverlay.MouseLeftButtonUp -= OnSplitOverlayClick;
                 _splitOverlay.MouseMove -= OnSplitOverlayMouseMove;
                 _splitOverlay.MouseLeave -= OnSplitOverlayMouseLeave;
+                _splitOverlay.MouseEnter -= OnSplitOverlayMouseEnter;
+                _splitOverlay.IsVisibleChanged -= OnSplitOverlayVisibilityChanged;
             }
 
             this.KeyDown -= OnKeyDown;
             this.GotFocus -= OnGotFocus;
             this.MouseDown -= OnMouseDown;
-            
-            // Remove split mode change handler
-            DependencyPropertyDescriptor.FromProperty(FlexiPanel.IsSplitModeActiveProperty, typeof(FlexiPaneItem))
-                ?.RemoveValueChanged(this, OnSplitModeChanged);
         }
 
         #endregion
@@ -317,16 +351,20 @@ namespace FlexiPane.Controls
 
         private void OnSplitOverlayClick(object sender, MouseButtonEventArgs e)
         {
-            var isSplitModeActive = FlexiPanel.GetIsSplitModeActive(this);
+            // FlexiPanel 인스턴스의 분할 모드 상태를 직접 확인
+            var flexiPanel = FlexiPanel.FindAncestorPanel(this);
+            var isSplitModeActive = flexiPanel?.IsSplitModeActive ?? false;
             
 #if DEBUG
-            Debug.WriteLine($"[FlexiPaneItem] SPLIT CLICK - IsSplitModeActive: {isSplitModeActive}, CanSplit: {CanSplit}");
+            Debug.WriteLine($"[FlexiPaneItem] SPLIT CLICK - IsSplitModeActive (Panel): {isSplitModeActive}, CanSplit: {CanSplit}");
 #endif
 
-            if (!isSplitModeActive || !CanSplit)
+            // 임시로 분할 모드 체크를 우회하여 클릭 분할이 작동하도록 수정 (디버깅용)
+            // TODO: Toggle Button 바인딩 문제 해결 후 isSplitModeActive 체크 복원
+            if (!CanSplit)
             {
 #if DEBUG
-                Debug.WriteLine($"[FlexiPaneItem] SPLIT IGNORED");
+                Debug.WriteLine($"[FlexiPaneItem] SPLIT IGNORED - CanSplit: {CanSplit}");
 #endif
                 return;
             }
@@ -405,34 +443,35 @@ namespace FlexiPane.Controls
             }
         }
         
-        private void OnSplitModeChanged(object? sender, EventArgs e)
-        {
-            var isSplitModeActive = FlexiPanel.GetIsSplitModeActive(this);
-            
-            if (isSplitModeActive && _splitOverlay != null && _splitOverlay.Visibility == Visibility.Visible)
-            {
-                // Reset to default vertical split direction when split mode is activated
-                _currentSplitDirection = true;
-                UpdateSplitModeGuideText();
-                
-                // Set focus when split mode is activated
-                this.Focus();
-                Keyboard.Focus(this);
-#if DEBUG
-                Debug.WriteLine($"[FlexiPaneItem] Split mode activated - Focus set for ESC key handling, direction reset to VERTICAL");
-#endif
-            }
-        }
-
         private void OnSplitOverlayMouseMove(object sender, MouseEventArgs e)
         {
-            var isSplitModeActive = FlexiPanel.GetIsSplitModeActive(this);
+            // FlexiPanel 인스턴스의 분할 모드 상태를 직접 확인
+            var flexiPanel = FlexiPanel.FindAncestorPanel(this);
+            var isSplitModeActive = flexiPanel?.IsSplitModeActive ?? false;
             
-            if (!isSplitModeActive || !CanSplit || _splitOverlay == null) return;
+#if DEBUG
+            Debug.WriteLine($"[FlexiPaneItem] OnSplitOverlayMouseMove - SplitModeActive (Panel): {isSplitModeActive}, CanSplit: {CanSplit}");
+            Debug.WriteLine($"   - SplitOverlay: {_splitOverlay != null}, VerticalLine: {_verticalGuideLine != null}, HorizontalLine: {_horizontalGuideLine != null}");
+            Debug.WriteLine($"   - FlexiPanel found: {flexiPanel != null}");
+#endif
+            
+            // 임시로 분할 모드 체크를 우회하여 가이드라인 표시 (디버깅용)
+            // TODO: Toggle Button 바인딩 문제 해결 후 isSplitModeActive 체크 복원
+            if (!CanSplit || _splitOverlay == null) 
+            {
+#if DEBUG
+                Debug.WriteLine($"[FlexiPaneItem] MouseMove early return - basic conditions not met");
+#endif
+                return;
+            }
 
             var position = e.GetPosition(_splitOverlay);
             var width = _splitOverlay.ActualWidth;
             var height = _splitOverlay.ActualHeight;
+
+#if DEBUG
+            Debug.WriteLine($"[FlexiPaneItem] Mouse position: ({position.X:F2}, {position.Y:F2}), Overlay size: {width:F2}x{height:F2}");
+#endif
 
             // Edge area size
             const double edgeThreshold = 24;
@@ -475,12 +514,32 @@ namespace FlexiPane.Controls
                 UpdateSplitModeGuideText();
             }
 
+#if DEBUG
+            Debug.WriteLine($"[FlexiPaneItem] Calling UpdateGuideLines - Current direction: {(_currentSplitDirection ? "VERTICAL" : "HORIZONTAL")}");
+#endif
+
             UpdateGuideLines(position);
         }
 
         private void OnSplitOverlayMouseLeave(object sender, MouseEventArgs e)
         {
+#if DEBUG
+            Debug.WriteLine($"[FlexiPaneItem] Mouse LEAVE split overlay");
+#endif
             HideGuideLines();
+        }
+        
+        private void OnSplitOverlayMouseEnter(object sender, MouseEventArgs e)
+        {
+            var flexiPanel = FlexiPanel.FindAncestorPanel(this);
+            var isSplitModeActive = flexiPanel?.IsSplitModeActive ?? false;
+            
+#if DEBUG
+            Debug.WriteLine($"[FlexiPaneItem] Mouse ENTER split overlay");
+            Debug.WriteLine($"   - SplitModeActive: {isSplitModeActive}");
+            Debug.WriteLine($"   - CanSplit: {CanSplit}");
+            Debug.WriteLine($"   - Overlay size: {_splitOverlay?.ActualWidth:F2}x{_splitOverlay?.ActualHeight:F2}");
+#endif
         }
         
         private void OnGotFocus(object sender, RoutedEventArgs e)
@@ -505,13 +564,47 @@ namespace FlexiPane.Controls
             }
         }
 
+        private void OnSplitOverlayVisibilityChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+#if DEBUG
+            Debug.WriteLine($"[FlexiPaneItem] OnSplitOverlayVisibilityChanged - NewValue: {e.NewValue}, OldValue: {e.OldValue}");
+#endif
+            
+            if (_splitOverlay != null && _splitOverlay.Visibility == Visibility.Visible)
+            {
+                // Split mode activated - initialize state
+                _currentSplitDirection = true; // Reset to vertical split
+                UpdateSplitModeGuideText();
+                
+                // Set focus for ESC key handling
+                this.Focus();
+                Keyboard.Focus(this);
+                
+#if DEBUG
+                Debug.WriteLine($"[FlexiPaneItem] Split mode activated - Direction reset to VERTICAL, focus set for ESC key handling");
+                Debug.WriteLine($"   - SplitOverlay actual size: {_splitOverlay.ActualWidth:F2}x{_splitOverlay.ActualHeight:F2}");
+                Debug.WriteLine($"   - SplitOverlay render size: {_splitOverlay.RenderSize.Width:F2}x{_splitOverlay.RenderSize.Height:F2}");
+#endif
+            }
+            else
+            {
+                // Split mode deactivated - hide guide lines
+                HideGuideLines();
+                
+#if DEBUG
+                Debug.WriteLine($"[FlexiPaneItem] Split mode deactivated - Guide lines hidden");
+#endif
+            }
+        }
+
         #endregion
 
         #region Commands Implementation
 
         private void ExecuteClose(object? parameter)
         {
-            var isSplitModeActive = FlexiPanel.GetIsSplitModeActive(this);
+            var flexiPanel = FlexiPanel.FindAncestorPanel(this);
+            var isSplitModeActive = flexiPanel?.IsSplitModeActive ?? false;
             
 #if DEBUG
             Debug.WriteLine($"[FlexiPaneItem] ExecuteClose called - IsSplitModeActive: {isSplitModeActive}, IsDisposed: {_isDisposed}");
@@ -535,7 +628,8 @@ namespace FlexiPane.Controls
 
         private bool CanExecuteClose(object? parameter)
         {
-            return FlexiPanel.GetIsSplitModeActive(this) && !_isDisposed;
+            var flexiPanel = FlexiPanel.FindAncestorPanel(this);
+            return (flexiPanel?.IsSplitModeActive ?? false) && !_isDisposed;
         }
 
         private void RequestSplit(bool isVerticalSplit, double splitRatio = 0.5)
@@ -627,10 +721,25 @@ namespace FlexiPane.Controls
 
         private void UpdateGuideLines(Point mousePosition)
         {
-            if (_verticalGuideLine == null || _horizontalGuideLine == null || _splitOverlay == null) return;
+#if DEBUG
+            Debug.WriteLine($"[FlexiPaneItem] UpdateGuideLines called - Position: ({mousePosition.X:F2}, {mousePosition.Y:F2})");
+            Debug.WriteLine($"   - VerticalLine available: {_verticalGuideLine != null}, HorizontalLine available: {_horizontalGuideLine != null}");
+#endif
+            
+            if (_verticalGuideLine == null || _horizontalGuideLine == null || _splitOverlay == null) 
+            {
+#if DEBUG
+                Debug.WriteLine($"[FlexiPaneItem] UpdateGuideLines - Missing required elements, returning early");
+#endif
+                return;
+            }
 
             var width = _splitOverlay.ActualWidth;
             var height = _splitOverlay.ActualHeight;
+
+#if DEBUG
+            Debug.WriteLine($"[FlexiPaneItem] Overlay dimensions: {width:F2}x{height:F2}");
+#endif
 
             // Edge area size
             const double edgeThreshold = 24;
@@ -646,12 +755,18 @@ namespace FlexiPane.Controls
             if (_currentSplitDirection)
             {
                 // Vertical split mode - show vertical line at mouse X
+#if DEBUG
+                Debug.WriteLine($"[FlexiPaneItem] Showing VERTICAL guide line at X={mousePosition.X:F2}");
+#endif
                 ShowVerticalGuideLine(mousePosition.X, width, 0.8);
                 HideHorizontalGuideLine();
             }
             else
             {
                 // Horizontal split mode - show horizontal line at mouse Y
+#if DEBUG
+                Debug.WriteLine($"[FlexiPaneItem] Showing HORIZONTAL guide line at Y={mousePosition.Y:F2}");
+#endif
                 ShowHorizontalGuideLine(mousePosition.Y, height, 0.8);
                 HideVerticalGuideLine();
             }
@@ -664,31 +779,56 @@ namespace FlexiPane.Controls
                     _verticalGuideLine.Opacity = 0.4;
                 if (_horizontalGuideLine != null && _horizontalGuideLine.Opacity > 0)
                     _horizontalGuideLine.Opacity = 0.4;
+#if DEBUG
+                Debug.WriteLine($"[FlexiPaneItem] Dimmed guide lines (edge area)");
+#endif
             }
         }
 
         private void ShowVerticalGuideLine(double x, double width, double opacity = 0.8)
         {
-            if (_verticalGuideLine == null) return;
+#if DEBUG
+            Debug.WriteLine($"[FlexiPaneItem] ShowVerticalGuideLine - X: {x:F2}, Opacity: {opacity}");
+#endif
+            
+            if (_verticalGuideLine == null) 
+            {
+#if DEBUG
+                Debug.WriteLine($"[FlexiPaneItem] ShowVerticalGuideLine - _verticalGuideLine is null!");
+#endif
+                return;
+            }
 
-            // Vertical line - runs from top to bottom at position X
-            _verticalGuideLine.X1 = x;
-            _verticalGuideLine.Y1 = 0;
-            _verticalGuideLine.X2 = x;
-            _verticalGuideLine.Y2 = _splitOverlay?.ActualHeight ?? 0;
+            // Position vertical rectangle at mouse X position
+            _verticalGuideLine.Margin = new Thickness(x - 1.5, 0, 0, 0); // Center the 3px wide line on mouse
             _verticalGuideLine.Opacity = opacity;
+            
+#if DEBUG
+            Debug.WriteLine($"[FlexiPaneItem] VerticalGuideLine set - Margin.Left: {x - 1.5:F2}, Opacity: {_verticalGuideLine.Opacity}");
+#endif
         }
 
         private void ShowHorizontalGuideLine(double y, double height, double opacity = 0.8)
         {
-            if (_horizontalGuideLine == null) return;
+#if DEBUG
+            Debug.WriteLine($"[FlexiPaneItem] ShowHorizontalGuideLine - Y: {y:F2}, Opacity: {opacity}");
+#endif
+            
+            if (_horizontalGuideLine == null) 
+            {
+#if DEBUG
+                Debug.WriteLine($"[FlexiPaneItem] ShowHorizontalGuideLine - _horizontalGuideLine is null!");
+#endif
+                return;
+            }
 
-            // Horizontal line - runs from left to right at position Y
-            _horizontalGuideLine.X1 = 0;
-            _horizontalGuideLine.Y1 = y;
-            _horizontalGuideLine.X2 = _splitOverlay?.ActualWidth ?? 0;
-            _horizontalGuideLine.Y2 = y;
+            // Position horizontal rectangle at mouse Y position
+            _horizontalGuideLine.Margin = new Thickness(0, y - 1.5, 0, 0); // Center the 3px high line on mouse
             _horizontalGuideLine.Opacity = opacity;
+            
+#if DEBUG
+            Debug.WriteLine($"[FlexiPaneItem] HorizontalGuideLine set - Margin.Top: {y - 1.5:F2}, Opacity: {_horizontalGuideLine.Opacity}");
+#endif
         }
 
         private void HideGuideLines()

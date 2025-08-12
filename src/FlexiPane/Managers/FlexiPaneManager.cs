@@ -61,6 +61,20 @@ namespace FlexiPane.Managers
             Debug.WriteLine($"[FlexiPaneManager] Split ratio validated: {splitRatio:F2}");
 #endif
 
+            // Find FlexiPanel first - this is critical for updating RootContent
+            var flexiPanel = FlexiPanel.FindAncestorPanel(sourcePane);
+            if (flexiPanel == null)
+            {
+#if DEBUG
+                Debug.WriteLine($"[FlexiPaneManager] SplitPane failed - no FlexiPanel found");
+#endif
+                return null;
+            }
+
+#if DEBUG
+            Debug.WriteLine($"[FlexiPaneManager] Found FlexiPanel: {flexiPanel.GetHashCode()}");
+#endif
+
             // Find direct parent of sourcePane
 #if DEBUG
             Debug.WriteLine($"[FlexiPaneManager] Finding sourcePane's direct parent");
@@ -121,26 +135,41 @@ namespace FlexiPane.Managers
 #if DEBUG
                 Debug.WriteLine($"[FlexiPaneManager] Replacing sourcePane with container in direct parent");
 #endif
-                ReplaceChild(directParent, sourcePane, container);
+
+                // Check if sourcePane is FlexiPanel's RootContent
+                bool isRootContent = (flexiPanel.RootContent == sourcePane);
+                
+                if (isRootContent)
+                {
+#if DEBUG
+                    Debug.WriteLine($"[FlexiPaneManager] SourcePane is RootContent - updating FlexiPanel.RootContent directly");
+#endif
+                    // Update FlexiPanel's RootContent directly
+                    flexiPanel.UpdateRootContent(container);
+                }
+                else
+                {
+#if DEBUG
+                    Debug.WriteLine($"[FlexiPaneManager] SourcePane is not RootContent - replacing in parent container");
+#endif
+                    // Replace in parent container
+                    ReplaceChild(directParent, sourcePane, container);
+                }
 
 #if DEBUG
                 Debug.WriteLine($"[FlexiPaneManager] Split process completed - Container created with {container.FirstChild?.GetType().Name} and {container.SecondChild?.GetType().Name}");
 #endif
 
-                // 6. Connect events
+                // 7. Connect events
                 ConnectPaneEvents(sourcePane);
                 ConnectPaneEvents(newPane);
 
-                // 7. Raise new panel created event
-                var flexiPanel = FlexiPanel.FindAncestorPanel(container);
-                if (flexiPanel != null)
+                // 8. Raise new panel created event
+                var newPaneCreatedArgs = new NewPaneCreatedEventArgs(newPane, sourcePane)
                 {
-                    var newPaneCreatedArgs = new NewPaneCreatedEventArgs(newPane, sourcePane)
-                    {
-                        RoutedEvent = FlexiPanel.NewPaneCreatedEvent
-                    };
-                    flexiPanel.RaiseEvent(newPaneCreatedArgs);
-                }
+                    RoutedEvent = FlexiPanel.NewPaneCreatedEvent
+                };
+                flexiPanel.RaiseEvent(newPaneCreatedArgs);
 
                 return container;
             }

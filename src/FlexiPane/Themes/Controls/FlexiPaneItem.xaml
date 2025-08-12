@@ -39,7 +39,7 @@
               <Border.Style>
                 <Style TargetType="Border">
                   <Style.Triggers>
-                    <DataTrigger Binding="{Binding Path=(controls:FlexiPanel.IsSplitModeActive), RelativeSource={RelativeSource AncestorType=controls:FlexiPaneItem}}" Value="True">
+                    <DataTrigger Binding="{Binding Path=(controls:FlexiPanel.IsSplitModeActive), RelativeSource={RelativeSource AncestorType=controls:FlexiPanel}}" Value="True">
                       <Setter Property="IsHitTestVisible" Value="True" />
                     </DataTrigger>
                     <Trigger Property="IsMouseOver" Value="True">
@@ -65,7 +65,7 @@
               Command="{TemplateBinding CloseCommand}"
               Cursor="Hand"
               ToolTip="Close Pane"
-              Visibility="{Binding Path=(controls:FlexiPanel.IsSplitModeActive), RelativeSource={RelativeSource Self}, Converter={StaticResource BooleanToVisibilityConverter}}">
+              Visibility="{Binding Path=(controls:FlexiPanel.IsSplitModeActive), RelativeSource={RelativeSource AncestorType=controls:FlexiPanel}, Converter={StaticResource BooleanToVisibilityConverter}}">
               <Button.Template>
                 <ControlTemplate TargetType="Button">
                   <Border
@@ -105,7 +105,7 @@
               Panel.ZIndex="500"
               Background="#80000000"
               Focusable="True"
-              Visibility="{Binding Path=(controls:FlexiPanel.IsSplitModeActive), RelativeSource={RelativeSource Self}, Converter={StaticResource BooleanToVisibilityConverter}}">
+              Visibility="{Binding Path=(controls:FlexiPanel.IsSplitModeActive), RelativeSource={RelativeSource AncestorType=controls:FlexiPanel}, Converter={StaticResource BooleanToVisibilityConverter}}">
 
               <!--  Dark background  -->
               <Border
@@ -117,27 +117,23 @@
               <!--  Split guide  -->
               <Grid Background="Transparent">
                 <!--  Dynamic split guide lines (red solid lines)  -->
-                <Line
+                <Rectangle
                   x:Name="PART_VerticalGuideLine"
                   Panel.ZIndex="600"
+                  Width="3"
+                  Fill="#FFFF0000"
                   Opacity="0"
-                  Stroke="#FFFF0000"
-                  StrokeThickness="3"
-                  X1="0"
-                  X2="0"
-                  Y1="0"
-                  Y2="100" />
+                  HorizontalAlignment="Left"
+                  VerticalAlignment="Stretch" />
 
-                <Line
+                <Rectangle
                   x:Name="PART_HorizontalGuideLine"
                   Panel.ZIndex="600"
+                  Height="3"
+                  Fill="#FFFF0000"
                   Opacity="0"
-                  Stroke="#FFFF0000"
-                  StrokeThickness="3"
-                  X1="0"
-                  X2="100"
-                  Y1="0"
-                  Y2="0" />
+                  HorizontalAlignment="Stretch"
+                  VerticalAlignment="Top" />
 
                 <!--  Top guide (auto-set to vertical split on hover)  -->
                 <Border

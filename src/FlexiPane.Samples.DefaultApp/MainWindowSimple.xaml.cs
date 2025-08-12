@@ -12,37 +12,42 @@ public partial class MainWindowSimple : Window
     {
         InitializeComponent();
         
-        // 디버그: Toggle 버튼과 FlexiPanel 상태 확인
+        // ToggleButton 상태 변경 로깅 및 수동 설정 추가
         ModeToggleButton.Checked += (s, e) => {
-            System.Diagnostics.Debug.WriteLine("🔛 Toggle ON - IsChecked: " + ModeToggleButton.IsChecked);
-            System.Diagnostics.Debug.WriteLine("🔛 FlexiPanel.IsSplitModeActive BEFORE: " + FlexiPanel.IsSplitModeActive);
+            System.Diagnostics.Debug.WriteLine($"🔘 ModeToggleButton CHECKED - IsChecked: {ModeToggleButton.IsChecked}");
+            System.Diagnostics.Debug.WriteLine($"   - FlexiPanel.IsSplitModeActive BEFORE: {FlexiPanel.IsSplitModeActive}");
             
-            // 바인딩이 작동하지 않으므로 직접 설정
-            System.Diagnostics.Debug.WriteLine("🔛 Setting IsSplitModeActive directly to TRUE...");
+            // 바인딩이 실패하는 경우를 대비해 수동으로 설정
             FlexiPanel.IsSplitModeActive = true;
             
-            System.Diagnostics.Debug.WriteLine("🔛 FlexiPanel.IsSplitModeActive AFTER: " + FlexiPanel.IsSplitModeActive);
-            StatusText.Text = "Split Mode: ON";
-        };
-        ModeToggleButton.Unchecked += (s, e) => {
-            System.Diagnostics.Debug.WriteLine("🔲 Toggle OFF - IsChecked: " + ModeToggleButton.IsChecked);
-            System.Diagnostics.Debug.WriteLine("🔲 FlexiPanel.IsSplitModeActive BEFORE: " + FlexiPanel.IsSplitModeActive);
-            
-            // 바인딩이 작동하지 않으므로 직접 설정  
-            System.Diagnostics.Debug.WriteLine("🔲 Setting IsSplitModeActive directly to FALSE...");
-            FlexiPanel.IsSplitModeActive = false;
-            
-            System.Diagnostics.Debug.WriteLine("🔲 FlexiPanel.IsSplitModeActive AFTER: " + FlexiPanel.IsSplitModeActive);
-            StatusText.Text = "Split Mode: OFF";
+            System.Diagnostics.Debug.WriteLine($"   - FlexiPanel.IsSplitModeActive AFTER: {FlexiPanel.IsSplitModeActive}");
         };
         
-        // FlexiPanel의 Split Mode 변경 이벤트도 확인
+        ModeToggleButton.Unchecked += (s, e) => {
+            System.Diagnostics.Debug.WriteLine($"🔲 ModeToggleButton UNCHECKED - IsChecked: {ModeToggleButton.IsChecked}");
+            System.Diagnostics.Debug.WriteLine($"   - FlexiPanel.IsSplitModeActive BEFORE: {FlexiPanel.IsSplitModeActive}");
+            
+            // 바인딩이 실패하는 경우를 대비해 수동으로 설정
+            FlexiPanel.IsSplitModeActive = false;
+            
+            System.Diagnostics.Debug.WriteLine($"   - FlexiPanel.IsSplitModeActive AFTER: {FlexiPanel.IsSplitModeActive}");
+        };
+        
+        // FlexiPanel IsSplitModeActive 속성 변경도 직접 모니터링
+        var descriptor = System.ComponentModel.DependencyPropertyDescriptor.FromProperty(
+            FlexiPane.Controls.FlexiPanel.IsSplitModeActiveInstanceProperty, 
+            typeof(FlexiPane.Controls.FlexiPanel));
+        descriptor?.AddValueChanged(FlexiPanel, (s, e) => {
+            System.Diagnostics.Debug.WriteLine($"🎛️ FlexiPanel.IsSplitModeActive changed to: {FlexiPanel.IsSplitModeActive}");
+        });
+        
+        // FlexiPanel의 Split Mode 변경 이벤트만 간단히 상태 표시용으로 사용
         FlexiPanel.SplitModeChanged += (s, e) => {
             System.Diagnostics.Debug.WriteLine("⚡ SplitModeChanged - IsActive: " + e.IsActive);
             StatusText.Text = $"Split Mode: {(e.IsActive ? "ON" : "OFF")}";
         };
         
-        // FlexiPanel 로드 완료 확인
+        // FlexiPanel 로드 완료 확인 (디버깅용)
         FlexiPanel.Loaded += (s, e) => {
             System.Diagnostics.Debug.WriteLine("📋 FlexiPanel Loaded");
             System.Diagnostics.Debug.WriteLine($"📋 RootContent: {FlexiPanel.RootContent?.GetType().Name ?? "null"}");
@@ -81,9 +86,14 @@ public partial class MainWindowSimple : Window
         {
             // CreateNewContent()에서 Border를 반환 - FlexiPanel에서 FlexiPaneItem으로 래핑할 것
             e.RequestedContent = CreateNewContent();
-            e.Handled = true;
+            // 중요: SplitPane 요청의 경우 Handled를 true로 설정하지 않음
+            // FlexiPanel이 추가 처리를 수행해야 함
+            if (e.RequestType != FlexiPane.Events.ContentRequestType.SplitPane)
+            {
+                e.Handled = true;
+            }
             System.Diagnostics.Debug.WriteLine($"   - CreateNewContent() called for {e.RequestType}/{e.Purpose}! Returned Type: {e.RequestedContent?.GetType().Name}");
-            System.Diagnostics.Debug.WriteLine($"   - FlexiPanel will wrap this in FlexiPaneItem for splitting capability");
+            System.Diagnostics.Debug.WriteLine($"   - Handled set to: {e.Handled} (SplitPane requests need FlexiPanel processing)");
         }
     }
 
