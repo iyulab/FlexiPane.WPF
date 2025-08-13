@@ -6,7 +6,7 @@
     
     <!-- 패키지 정보 -->
     <Title>FlexiPane.WPF</Title>
-    <Version>1.0.2</Version>
+    <Version>1.0.3</Version>
     <Description>A modern and flexible WPF screen splitting library for dynamic pane management. Create resizable, dockable panels with intuitive split controls and visual feedback.</Description>
     <PackageTags>wpf;split-panel;pane;layout;docking;window-management;ui-controls;screen-splitter;dynamic-layout;flexipane</PackageTags>
     <PackageProjectUrl>https://github.com/iyulab/FlexiPane.WPF</PackageProjectUrl>

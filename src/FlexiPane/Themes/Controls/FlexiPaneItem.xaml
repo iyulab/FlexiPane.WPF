@@ -39,7 +39,7 @@
               <Border.Style>
                 <Style TargetType="Border">
                   <Style.Triggers>
-                    <DataTrigger Binding="{Binding Path=(controls:FlexiPanel.IsSplitModeActive), RelativeSource={RelativeSource AncestorType=controls:FlexiPanel}}" Value="True">
+                    <DataTrigger Binding="{Binding Path=IsSplitModeActive, RelativeSource={RelativeSource AncestorType=controls:FlexiPanel}}" Value="True">
                       <Setter Property="IsHitTestVisible" Value="True" />
                     </DataTrigger>
                     <Trigger Property="IsMouseOver" Value="True">
@@ -50,62 +50,13 @@
               </Border.Style>
             </Border>
 
-            <!--  Close button - Always visible in split mode  -->
-            <Button
-              x:Name="PART_CloseButton"
-              Width="24"
-              Height="24"
-              Margin="25"
-              HorizontalAlignment="Right"
-              VerticalAlignment="Top"
-              Panel.ZIndex="1000"
-              Background="#CCFF4444"
-              BorderBrush="#FFFF4444"
-              BorderThickness="1"
-              Command="{TemplateBinding CloseCommand}"
-              Cursor="Hand"
-              ToolTip="Close Pane"
-              Visibility="{Binding Path=(controls:FlexiPanel.IsSplitModeActive), RelativeSource={RelativeSource AncestorType=controls:FlexiPanel}, Converter={StaticResource BooleanToVisibilityConverter}}">
-              <Button.Template>
-                <ControlTemplate TargetType="Button">
-                  <Border
-                    Background="{TemplateBinding Background}"
-                    BorderBrush="{TemplateBinding BorderBrush}"
-                    BorderThickness="{TemplateBinding BorderThickness}"
-                    CornerRadius="12">
-                    <Path
-                      Width="8"
-                      Height="8"
-                      HorizontalAlignment="Center"
-                      VerticalAlignment="Center"
-                      Data="M0,0 L8,8 M0,8 L8,0"
-                      Stroke="White"
-                      StrokeThickness="2" />
-                  </Border>
-                </ControlTemplate>
-              </Button.Template>
-              <Button.Style>
-                <Style TargetType="Button">
-                  <Style.Triggers>
-                    <Trigger Property="IsMouseOver" Value="True">
-                      <Setter Property="Background" Value="#FFFF4444" />
-                      <Setter Property="BorderBrush" Value="#FFFF6666" />
-                    </Trigger>
-                    <Trigger Property="IsPressed" Value="True">
-                      <Setter Property="Background" Value="#FFDD2222" />
-                    </Trigger>
-                  </Style.Triggers>
-                </Style>
-              </Button.Style>
-            </Button>
-
             <!--  Split mode overlay - Bound to FlexiPanel's Attached Property  -->
             <Grid
               x:Name="PART_SplitOverlay"
               Panel.ZIndex="500"
               Background="#80000000"
               Focusable="True"
-              Visibility="{Binding Path=(controls:FlexiPanel.IsSplitModeActive), RelativeSource={RelativeSource AncestorType=controls:FlexiPanel}, Converter={StaticResource BooleanToVisibilityConverter}}">
+              Visibility="{Binding Path=IsSplitModeActive, RelativeSource={RelativeSource AncestorType=controls:FlexiPanel}, Converter={StaticResource BooleanToVisibilityConverter}}">
 
               <!--  Dark background  -->
               <Border
@@ -119,21 +70,21 @@
                 <!--  Dynamic split guide lines (red solid lines)  -->
                 <Rectangle
                   x:Name="PART_VerticalGuideLine"
-                  Panel.ZIndex="600"
                   Width="3"
-                  Fill="#FFFF0000"
-                  Opacity="0"
                   HorizontalAlignment="Left"
-                  VerticalAlignment="Stretch" />
+                  VerticalAlignment="Stretch"
+                  Panel.ZIndex="600"
+                  Fill="#FFFF0000"
+                  Opacity="0" />
 
                 <Rectangle
                   x:Name="PART_HorizontalGuideLine"
-                  Panel.ZIndex="600"
                   Height="3"
-                  Fill="#FFFF0000"
-                  Opacity="0"
                   HorizontalAlignment="Stretch"
-                  VerticalAlignment="Top" />
+                  VerticalAlignment="Top"
+                  Panel.ZIndex="600"
+                  Fill="#FFFF0000"
+                  Opacity="0" />
 
                 <!--  Top guide (auto-set to vertical split on hover)  -->
                 <Border
@@ -253,6 +204,55 @@
                 </Border>
               </Grid>
             </Grid>
+
+            <!--  Close button - Always visible in split mode  -->
+            <Button
+              x:Name="PART_CloseButton"
+              Width="24"
+              Height="24"
+              Margin="25"
+              HorizontalAlignment="Right"
+              VerticalAlignment="Top"
+              Panel.ZIndex="1000"
+              Background="#CCFF4444"
+              BorderBrush="#FFFF4444"
+              BorderThickness="1"
+              Command="{TemplateBinding CloseCommand}"
+              Cursor="Hand"
+              ToolTip="Close Pane"
+              Visibility="{Binding Path=IsSplitModeActive, RelativeSource={RelativeSource AncestorType=controls:FlexiPanel}, Converter={StaticResource BooleanToVisibilityConverter}}">
+              <Button.Template>
+                <ControlTemplate TargetType="Button">
+                  <Border
+                    Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    CornerRadius="12">
+                    <Path
+                      Width="8"
+                      Height="8"
+                      HorizontalAlignment="Center"
+                      VerticalAlignment="Center"
+                      Data="M0,0 L8,8 M0,8 L8,0"
+                      Stroke="White"
+                      StrokeThickness="2" />
+                  </Border>
+                </ControlTemplate>
+              </Button.Template>
+              <Button.Style>
+                <Style TargetType="Button">
+                  <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                      <Setter Property="Background" Value="#FFFF4444" />
+                      <Setter Property="BorderBrush" Value="#FFFF6666" />
+                    </Trigger>
+                    <Trigger Property="IsPressed" Value="True">
+                      <Setter Property="Background" Value="#FFDD2222" />
+                    </Trigger>
+                  </Style.Triggers>
+                </Style>
+              </Button.Style>
+            </Button>
           </Grid>
 
           <ControlTemplate.Triggers>

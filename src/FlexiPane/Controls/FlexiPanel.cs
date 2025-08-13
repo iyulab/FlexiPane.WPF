@@ -102,9 +102,10 @@ namespace FlexiPane.Controls
                             var wrappedItem = new FlexiPaneItem
                             {
                                 Title = "Main Panel",
-                                CanSplit = true,
+                                CanSplit = IsSplitModeActive,
                                 Content = requestedContent
                             };
+                            // Split mode inherited through binding
                             RootContent = wrappedItem;
                         }
                     }
@@ -303,7 +304,7 @@ namespace FlexiPane.Controls
 #endif
                     // Just enable splitting on existing pane
                     existingPane.CanSplit = true;
-                    SetIsSplitModeActive(existingPane, true);
+                    // Split mode state is inherited through WPF binding
                     
                     // Select this pane if none is selected
                     if (SelectedItem == null)
@@ -337,7 +338,7 @@ namespace FlexiPane.Controls
                     System.Diagnostics.Debug.WriteLine($"[FlexiPanel] Split mode deactivated - disabling split capability on single pane");
 #endif
                     existingPane.CanSplit = false;
-                    SetIsSplitModeActive(existingPane, false);
+                    // Split mode state is inherited through WPF binding
                 }
                 else if (RootContent is FlexiPaneContainer)
                 {
@@ -357,11 +358,7 @@ namespace FlexiPane.Controls
                 }
             }
             
-            // Propagate to RootContent and child elements
-            if (RootContent != null)
-            {
-                PropagateAttachedPropertyRecursively(RootContent, IsSplitModeActiveProperty, isActive);
-            }
+            // WPF binding handles property inheritance automatically
         }
         
 
@@ -400,7 +397,7 @@ namespace FlexiPane.Controls
                 // Also propagate to RootContent and child elements
                 if (panel.RootContent != null)
                 {
-                    PropagateAttachedPropertyRecursively(panel.RootContent, IsSplitModeActiveProperty, e.NewValue);
+                    // WPF binding handles property inheritance automatically
                 }
             }
         }
@@ -411,7 +408,7 @@ namespace FlexiPane.Controls
             if (d is FlexiPanel panel && e.NewValue is UIElement newContent)
             {
                 // Apply current state to new content and child elements
-                PropagateAttachedPropertyRecursively(newContent, IsSplitModeActiveProperty, panel.IsSplitModeActive);
+                // WPF binding handles property inheritance automatically
             }
         }
 
@@ -597,62 +594,20 @@ namespace FlexiPane.Controls
                     return;
                 }
 
-                // Process close when there are 2 or more panels
-                var parentContainer = Managers.FlexiPaneManager.FindDirectParentContainer(e.Pane);
-                if (parentContainer != null)
+                // Process close using simplified manager
+                var success = Managers.FlexiPaneManager.ClosePane(e.Pane);
+                if (!success)
                 {
 #if DEBUG
-                    System.Diagnostics.Debug.WriteLine($"[FlexiPanel] Found parent container, attempting to close pane. Total panes: {totalPanes}");
+                    System.Diagnostics.Debug.WriteLine($"[FlexiPanel] ClosePane failed, cancelling close operation");
 #endif
-                    var success = Managers.FlexiPaneManager.ClosePane(parentContainer, e.Pane);
-                    if (!success)
-                    {
-#if DEBUG
-                        System.Diagnostics.Debug.WriteLine($"[FlexiPanel] ClosePane failed, cancelling close operation");
-#endif
-                        e.Cancel = true;
-                    }
-                    else
-                    {
-#if DEBUG
-                        System.Diagnostics.Debug.WriteLine($"[FlexiPanel] ClosePane succeeded. Remaining panes: {CountTotalPanes()}");
-#endif
-                    }
+                    e.Cancel = true;
                 }
                 else
                 {
-                    // When RootContent is a single FlexiPaneItem
-                    if (RootContent == e.Pane)
-                    {
 #if DEBUG
-                        System.Diagnostics.Debug.WriteLine($"[FlexiPanel] Single pane is RootContent - triggering LastPaneClosing");
+                    System.Diagnostics.Debug.WriteLine($"[FlexiPanel] ClosePane succeeded. Remaining panes: {CountTotalPanes()}");
 #endif
-                        // Raise last panel closing event
-                        var lastPaneArgs = new LastPaneClosingEventArgs(e.Pane, e.Reason)
-                        {
-                            RoutedEvent = LastPaneClosingEvent
-                        };
-                        RaiseEvent(lastPaneArgs);
-                        
-                        if (lastPaneArgs.Cancel)
-                        {
-                            e.Cancel = true;
-                            return;
-                        }
-                        
-                        // Allow closing last panel
-                        RootContent = null!;
-#if DEBUG
-                        System.Diagnostics.Debug.WriteLine($"[FlexiPanel] Last panel closed - RootContent cleared");
-#endif
-                    }
-                    else
-                    {
-#if DEBUG
-                        System.Diagnostics.Debug.WriteLine($"[FlexiPanel] No parent container found and not RootContent - cancelling");
-#endif
-                        e.Cancel = true;
-                    }
                 }
             }
         }
@@ -777,9 +732,10 @@ namespace FlexiPane.Controls
                     initialPane = new FlexiPaneItem
                     {
                         Title = "Main Panel",
-                        CanSplit = true,
+                        CanSplit = IsSplitModeActive,
                         Content = requestedContent
                     };
+                    // Split mode inherited through binding
                 }
             }
             else
@@ -790,13 +746,13 @@ namespace FlexiPane.Controls
                 initialPane = new FlexiPaneItem
                 {
                     Title = "Main Panel",
-                    CanSplit = true,
+                    CanSplit = IsSplitModeActive,
                     Content = CreateSamplePaneContent("Default Content", Colors.CornflowerBlue)
                 };
+                // Split mode inherited through binding
             }
             
-            // Set split mode properties
-            SetIsSplitModeActive(initialPane, true);
+            // Split mode inherited through binding automatically
             
             // Set as root content
             RootContent = initialPane;
@@ -846,19 +802,10 @@ namespace FlexiPane.Controls
         {
             if (element == null) return;
             
-#if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[FlexiPanel] EnableSplitModeRecursively - Element: {element.GetType().Name}, Enable: {enableSplitMode}");
-#endif
-            
             switch (element)
             {
                 case FlexiPaneItem paneItem:
-#if DEBUG
-                    System.Diagnostics.Debug.WriteLine($"[FlexiPanel] EnableSplitModeRecursively - Setting FlexiPaneItem CanSplit: {enableSplitMode}");
-#endif
                     paneItem.CanSplit = enableSplitMode;
-                    SetIsSplitModeActive(paneItem, enableSplitMode);
-                    
                     // If enabling and no item is selected, select this one
                     if (enableSplitMode && SelectedItem == null)
                     {
@@ -867,18 +814,8 @@ namespace FlexiPane.Controls
                     break;
                     
                 case FlexiPaneContainer container:
-#if DEBUG
-                    System.Diagnostics.Debug.WriteLine($"[FlexiPanel] EnableSplitModeRecursively - Processing FlexiPaneContainer children");
-#endif
-                    // Recursively process both children
                     EnableSplitModeRecursively(container.FirstChild, enableSplitMode);
                     EnableSplitModeRecursively(container.SecondChild, enableSplitMode);
-                    break;
-                    
-                default:
-#if DEBUG
-                    System.Diagnostics.Debug.WriteLine($"[FlexiPanel] EnableSplitModeRecursively - Unknown element type: {element.GetType().Name}");
-#endif
                     break;
             }
         }
@@ -958,55 +895,82 @@ namespace FlexiPane.Controls
         }
 
         /// <summary>
-        /// Replace RootContent with new content
+        /// Replace RootContent with new content and force complete UI update
         /// </summary>
-        internal void UpdateRootContent(UIElement newContent)
+        internal void UpdateRootContent(UIElement? newContent)
         {
-            RootContent = newContent;
+#if DEBUG
+            System.Diagnostics.Debug.WriteLine($"[FlexiPanel] UpdateRootContent - Old: {RootContent?.GetType().Name ?? "null"}, New: {newContent?.GetType().Name ?? "null"}");
+#endif
+            RootContent = newContent!;
+            
+            // Force immediate and complete UI tree update
+            InvalidateVisual();
+            InvalidateMeasure();
+            InvalidateArrange();
+            UpdateLayout();
+            
+            // Schedule additional template applications after the UI has been updated
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.ApplicationIdle, new System.Action(() =>
+            {
+#if DEBUG
+                System.Diagnostics.Debug.WriteLine($"[FlexiPanel] Deferred RootContent template application");
+#endif
+                if (newContent != null)
+                {
+                    // Apply template if it's a templated control
+                    if (newContent is Control control)
+                    {
+                        control.ApplyTemplate();
+                        control.UpdateLayout();
+                    }
+                    
+                    // Also apply to all children recursively
+                    ApplyTemplatesRecursively(newContent);
+                }
+            }));
         }
-
+        
         /// <summary>
-        /// Recursively propagate Attached Property to child elements
+        /// Recursively apply templates to all controls in the tree
         /// </summary>
-        private static void PropagateAttachedPropertyRecursively(UIElement element, DependencyProperty property, object value)
+        private void ApplyTemplatesRecursively(UIElement element)
         {
             if (element == null) return;
             
-            // Set on current element
-            element.SetValue(property, value);
-
-            // Recursively propagate to child elements
             switch (element)
             {
                 case FlexiPaneContainer container:
+#if DEBUG
+                    System.Diagnostics.Debug.WriteLine($"[FlexiPanel] ApplyTemplatesRecursively - FlexiPaneContainer");
+#endif
+                    container.ApplyTemplate();
+                    container.UpdateLayout();
                     if (container.FirstChild != null)
-                        PropagateAttachedPropertyRecursively(container.FirstChild, property, value);
+                        ApplyTemplatesRecursively(container.FirstChild);
                     if (container.SecondChild != null)
-                        PropagateAttachedPropertyRecursively(container.SecondChild, property, value);
+                        ApplyTemplatesRecursively(container.SecondChild);
                     break;
-
-                case System.Windows.Controls.Panel panel:
-                    foreach (UIElement child in panel.Children)
-                    {
-                        PropagateAttachedPropertyRecursively(child, property, value);
-                    }
+                    
+                case FlexiPaneItem paneItem:
+#if DEBUG
+                    System.Diagnostics.Debug.WriteLine($"[FlexiPanel] ApplyTemplatesRecursively - FlexiPaneItem");
+#endif
+                    paneItem.ApplyTemplate();
+                    paneItem.UpdateLayout();
                     break;
-
-                case System.Windows.Controls.ContentControl contentControl:
-                    if (contentControl.Content is UIElement contentElement)
-                    {
-                        PropagateAttachedPropertyRecursively(contentElement, property, value);
-                    }
-                    break;
-
-                case System.Windows.Controls.Border border:
-                    if (border.Child != null)
-                    {
-                        PropagateAttachedPropertyRecursively(border.Child, property, value);
-                    }
+                    
+                case Control control:
+#if DEBUG
+                    System.Diagnostics.Debug.WriteLine($"[FlexiPanel] ApplyTemplatesRecursively - Control: {control.GetType().Name}");
+#endif
+                    control.ApplyTemplate();
+                    control.UpdateLayout();
                     break;
             }
         }
+
+        // Removed complex property propagation - WPF binding handles this automatically
 
         #endregion
     }

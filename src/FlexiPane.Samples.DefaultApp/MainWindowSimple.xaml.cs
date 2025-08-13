@@ -21,6 +21,7 @@ public partial class MainWindowSimple : Window
             FlexiPanel.IsSplitModeActive = true;
             
             System.Diagnostics.Debug.WriteLine($"   - FlexiPanel.IsSplitModeActive AFTER: {FlexiPanel.IsSplitModeActive}");
+            
         };
         
         ModeToggleButton.Unchecked += (s, e) => {
@@ -31,6 +32,7 @@ public partial class MainWindowSimple : Window
             FlexiPanel.IsSplitModeActive = false;
             
             System.Diagnostics.Debug.WriteLine($"   - FlexiPanel.IsSplitModeActive AFTER: {FlexiPanel.IsSplitModeActive}");
+            
         };
         
         // FlexiPanel IsSplitModeActive 속성 변경도 직접 모니터링
@@ -59,6 +61,7 @@ public partial class MainWindowSimple : Window
             if (FlexiPanel.RootContent is FlexiPane.Controls.FlexiPaneItem paneItem)
             {
                 System.Diagnostics.Debug.WriteLine($"📋 FlexiPaneItem - Title: {paneItem.Title}, CanSplit: {paneItem.CanSplit}");
+                System.Diagnostics.Debug.WriteLine($"📋 FlexiPaneItem - CanSplit: {paneItem.CanSplit}");
                 System.Diagnostics.Debug.WriteLine($"📋 FlexiPaneItem Content: {paneItem.Content?.GetType().Name ?? "null"}");
             }
             else if (FlexiPanel.RootContent is System.Windows.Controls.Border border)
@@ -120,6 +123,7 @@ public partial class MainWindowSimple : Window
         // 단순히 Border를 반환 - FlexiPanel에서 필요시 FlexiPaneItem으로 래핑할 것
         return border;
     }
+
 
     private Brush GenerateRandomBrush()
     {

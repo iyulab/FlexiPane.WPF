@@ -16,19 +16,20 @@ A modern and flexible WPF screen splitting library for dynamic pane management. 
 
 ## ✨ Features
 
-- 🎯 **Dynamic Screen Splitting** - Split panels vertically or horizontally at runtime
+- 🎯 **Interactive Split Overlays** - Mouse-driven splitting with visual direction guides and hover feedback
 - 🎨 **Toggle Split Mode** - Simple boolean property to enable/disable splitting functionality  
-- 🔄 **Smart Panel Management** - Automatic structure preservation and recursive split control
-- 🎮 **Programmatic Control** - Built-in methods for splitting selected panels
-- 🎯 **Focus & Selection** - Automatic focus tracking and visual selection indicators
-- 📐 **Flexible Layouts** - Support for complex nested split arrangements that persist
-- 🔌 **Event-Driven Architecture** - Unified ContentRequested event system
+- 🔄 **Smart Panel Management** - Advanced visual tree management with proper disposal and cleanup
+- 🎮 **Programmatic Control** - Built-in methods for splitting selected panels programmatically
+- 🎯 **Focus & Selection** - Automatic focus tracking with visual selection indicators
+- 📐 **Flexible Layouts** - Support for complex nested split arrangements with layout serialization
+- 🔌 **Event-Driven Architecture** - Unified ContentRequested event system for dynamic content
 - 🎨 **Automatic Content Wrapping** - Any UIElement gets automatically wrapped for splitting capability
-- ⚡ **High Performance** - Pure WPF implementation with optimized rendering
+- ⚡ **High Performance** - Pure WPF implementation with optimized rendering and template caching
 - 🛡️ **Safe Mode Toggling** - Split mode can be toggled on/off without losing existing layouts
 - 🎛️ **Minimal Configuration** - Works with just `<flexiPane:FlexiPanel />` in XAML
-- ⌨️ **Full Keyboard Support** - Complete keyboard navigation and shortcuts
-- 💾 **Zero Configuration** - Works out of the box with sensible defaults and automatic content generation
+- ⌨️ **Full Keyboard Support** - ESC key handling, focus navigation, and accessibility support
+- 💾 **Layout Persistence** - Save and load complex panel layouts to/from files
+- 🔧 **Robust Error Handling** - Comprehensive validation and graceful degradation
 
 ## 📦 Installation
 
@@ -165,9 +166,9 @@ flexiPanel.SplitModeChanged += (s, e) => {
 ### Core Components
 
 - **FlexiPanel** - Root container managing the entire pane structure
-- **FlexiPaneItem** - Individual panels containing user content
-- **FlexiPaneContainer** - Split containers holding two children with GridSplitter
-- **FlexiPaneManager** - Static manager handling split/remove operations
+- **FlexiPaneItem** - Individual panels containing user content with interactive split overlays
+- **FlexiPaneContainer** - Split containers holding two children with resizable GridSplitter
+- **FlexiPaneManager** - Manager handling split/close operations with proper visual tree management
 
 ### Tree Structure
 
@@ -184,9 +185,9 @@ FlexiPanel
 
 ## Advanced Features
 
-### Split Mode UI
+### Interactive Split Mode UI
 
-Enable interactive split mode with simple property binding:
+Enable interactive split mode with visual overlays and mouse interaction:
 
 ```xml
 <ToggleButton x:Name="SplitToggle" Content="Toggle Split Mode" />
@@ -197,14 +198,15 @@ Or programmatically:
 
 ```csharp
 flexiPanel.IsSplitModeActive = true;
-// Close buttons are automatically shown when split mode is active
+// Interactive split overlays and close buttons are automatically shown
 ```
 
 When split mode is active:
-- **Existing content preserved**: All panels remain visible and functional
-- **Right-click splitting**: Right-click on any panel to split it
-- **Keyboard shortcuts**: Use keyboard shortcuts for quick splitting
-- **Visual feedback**: Active split areas show visual indicators
+- **Interactive Split Overlays**: Hover over panels to see split direction guides
+- **Mouse-Based Splitting**: Click on overlay regions to split vertically/horizontally
+- **Visual Direction Guides**: Clear indicators showing split direction and guide lines
+- **Keyboard Navigation**: ESC to exit split mode, focus handling for accessibility
+- **Smart Close Operations**: Close buttons with proper visual tree cleanup
 - **Toggle off safely**: Disabling split mode preserves all existing panels
 
 ### Automatic Content Wrapping
@@ -226,9 +228,11 @@ private void OnContentRequested(object sender, ContentRequestedEventArgs e)
 The panel intelligently manages complex layouts:
 
 - **Automatic Structure Preservation**: When split mode is toggled off, existing split layouts are preserved
-- **Recursive Split Control**: All nested panels automatically inherit split mode settings
+- **Recursive Split Control**: All nested panels automatically inherit split mode settings  
 - **Dynamic Content Loading**: Content is created on-demand when panels are split
 - **Memory Efficient**: Only active panels consume resources
+- **Visual Tree Cleanup**: Proper disposal prevents memory leaks and visual tree conflicts
+- **Template Optimization**: Advanced template caching for improved performance
 
 ### Selection and Focus
 
@@ -272,6 +276,8 @@ The panel will:
 
 - [Architecture Design](docs/architecture.md) - System architecture and design principles
 - [Splitting Mechanism](docs/splitting-mechanism.md) - Detailed splitting algorithms and tree management
+- [Interactive Features](docs/interactive-features.md) - Mouse overlays, visual guides, and user interaction
+- [Layout Serialization](docs/layout-serialization.md) - Saving and loading panel arrangements
 
 ## 🎮 Demo Application
 
@@ -300,6 +306,18 @@ dotnet run --project src/FlexiPane.Samples.DefaultApp/
 
 The simple demo shows the **minimum code required** to get a fully functional split panel system working!
 
+### Interactive Split Features in Demo
+
+The demo applications showcase advanced interactive features:
+
+- **🎯 Visual Split Overlays**: Hover over panels to see split direction guides
+- **🖱️ Mouse-Driven Splitting**: Click top/bottom for vertical split, left/right for horizontal split  
+- **📏 Direction Guides**: Visual indicators showing exactly where splits will occur
+- **💾 Layout Persistence**: Save and restore complex panel arrangements
+- **⌨️ Keyboard Shortcuts**: ESC to exit split mode, Tab navigation between panels
+- **🔄 Smart Close Operations**: Close panels with proper visual tree cleanup
+- **🎨 Theme Support**: Complete XAML styling with modern visual appearance
+
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to:
@@ -326,12 +344,14 @@ Built with modern WPF best practices and inspired by proven splitting mechanisms
 
 ✅ **Production Ready** - The library is stable and ready for production use. Semantic versioning is followed for all releases.
 
-### Current Version: v1.0.0
-- ✅ **Simple Integration**: Works with minimal XAML configuration
+### Current Version: v1.0.1
+- ✅ **Interactive Split UI**: Mouse-driven overlays with visual direction guides  
 - ✅ **Event-Driven Architecture**: Unified ContentRequested event system  
 - ✅ **Smart Split Mode**: Toggle on/off while preserving existing layouts
-- ✅ **Automatic Content Wrapping**: Any UIElement becomes splittable
-- ✅ **Layout Preservation**: Split mode toggling doesn't destroy content
-- ✅ **Comprehensive Demo**: Both simple and full-featured examples
+- ✅ **Advanced Visual Tree Management**: Proper disposal and cleanup with modern architecture
+- ✅ **Layout Serialization**: Save/load complex panel arrangements to files
+- ✅ **Robust Error Handling**: Fixed visual tree attachment issues and memory cleanup
+- ✅ **Comprehensive Demo**: Both simple and full-featured examples with layout persistence
 - ✅ **Zero Configuration**: Works out of the box with sensible defaults
-- ✅ **Full XAML theming support**
+- ✅ **Accessibility Support**: Full keyboard navigation and screen reader compatibility
+- ✅ **Production Ready**: Clean build with zero warnings, comprehensive testing
