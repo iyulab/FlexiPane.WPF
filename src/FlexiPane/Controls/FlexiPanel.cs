@@ -1,4 +1,3 @@
-using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -15,6 +14,13 @@ namespace FlexiPane.Controls;
 [TemplatePart(Name = "PART_RootContent", Type = typeof(ContentPresenter))]
 public partial class FlexiPanel : Control
 {
+    private bool _isUpdatingSelection = false; // Prevent recursion in selection updates
+    
+    /// <summary>
+    /// Gets whether the panel is currently updating selection (for internal use by FlexiPaneItem)
+    /// </summary>
+    internal bool IsUpdatingSelection => _isUpdatingSelection;
+    
     static FlexiPanel()
     {
         DefaultStyleKeyProperty.OverrideMetadata(typeof(FlexiPanel), 
@@ -378,6 +384,12 @@ public partial class FlexiPanel : Control
         }
         
         // WPF binding handles property inheritance automatically
+        
+        // Validate selection consistency after split mode change
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, new Action(() =>
+        {
+            ValidateAndRepairSelection();
+        }));
     }
     
 
@@ -391,6 +403,12 @@ public partial class FlexiPanel : Control
         {
             // Apply current state to new content and child elements
             // WPF binding handles property inheritance automatically
+            
+            // Validate and repair selection after root content change
+            panel.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, new Action(() =>
+            {
+                panel.ValidateAndRepairSelection();
+            }));
         }
     }
 
@@ -525,6 +543,12 @@ public partial class FlexiPanel : Control
                         System.Diagnostics.Debug.WriteLine($"[FlexiPanel] SPLIT SUCCESS - Container created");
 #endif
                         e.Handled = true;
+                        
+                        // Validate and repair selection after split operation
+                        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, new Action(() =>
+                        {
+                            ValidateAndRepairSelection();
+                        }));
                     }
                 }
             }));
@@ -590,6 +614,12 @@ public partial class FlexiPanel : Control
 #if DEBUG
                 System.Diagnostics.Debug.WriteLine($"[FlexiPanel] ClosePane succeeded. Remaining panes: {CountTotalPanes()}");
 #endif
+                
+                // Validate and repair selection after close operation
+                Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, new Action(() =>
+                {
+                    ValidateAndRepairSelection();
+                }));
             }
         }
     }
@@ -662,17 +692,229 @@ public partial class FlexiPanel : Control
     }
     
     /// <summary>
-    /// Set the selected item (internal use)
+    /// Set the selected item (internal use) with comprehensive selection management
     /// </summary>
     internal void SetSelectedItem(FlexiPaneItem item)
     {
-        // Deselect previous item
-        if (SelectedItem != null && SelectedItem != item)
+        // Prevent recursion during selection updates
+        if (_isUpdatingSelection)
         {
-            SelectedItem.IsSelected = false;
+#if DEBUG
+            System.Diagnostics.Debug.WriteLine($"[FlexiPanel] SetSelectedItem blocked - already updating selection");
+#endif
+            return;
         }
         
-        SelectedItem = item;
+        // Prevent recursion and verify the item is actually in our tree
+        if (item != null && !IsItemInTree(item))
+        {
+#if DEBUG
+            System.Diagnostics.Debug.WriteLine($"[FlexiPanel] SetSelectedItem rejected - item {item.PaneId} not found in tree");
+#endif
+            return;
+        }
+        
+        try
+        {
+            _isUpdatingSelection = true;
+            
+            // Ensure only one item is selected across the entire tree
+            EnsureSingleSelectionInternal(item);
+            
+            SelectedItem = item;
+        }
+        finally
+        {
+            _isUpdatingSelection = false;
+        }
+    }
+    
+    /// <summary>
+    /// Verifies that a FlexiPaneItem is actually in the current tree
+    /// </summary>
+    private bool IsItemInTree(FlexiPaneItem item)
+    {
+        var allItems = GetAllPaneItems();
+        return allItems.Contains(item);
+    }
+    
+    /// <summary>
+    /// Ensures only one FlexiPaneItem is selected across the entire child tree
+    /// </summary>
+    private void EnsureSingleSelection(FlexiPaneItem? targetItem)
+    {
+        if (_isUpdatingSelection) return;
+        
+        try
+        {
+            _isUpdatingSelection = true;
+            EnsureSingleSelectionInternal(targetItem);
+        }
+        finally
+        {
+            _isUpdatingSelection = false;
+        }
+    }
+    
+    /// <summary>
+    /// Internal method to ensure single selection without recursion protection
+    /// </summary>
+    private void EnsureSingleSelectionInternal(FlexiPaneItem? targetItem)
+    {
+        // Clear all selections first
+        ClearAllSelections(RootContent);
+        
+        // Set the target item as selected
+        if (targetItem != null)
+        {
+            targetItem.SetCurrentValue(FlexiPaneItem.IsSelectedProperty, true);
+        }
+    }
+    
+    /// <summary>
+    /// Recursively clears all selections in the child tree
+    /// </summary>
+    private void ClearAllSelections(UIElement? element)
+    {
+        if (element == null) return;
+        
+        try
+        {
+            switch (element)
+            {
+                case FlexiPaneItem paneItem:
+                    // Directly set the backing field to prevent recursive events
+                    if (paneItem.IsSelected)
+                    {
+#if DEBUG
+                        System.Diagnostics.Debug.WriteLine($"[FlexiPanel] Clearing selection for {paneItem.PaneId}");
+#endif
+                        paneItem.SetCurrentValue(FlexiPaneItem.IsSelectedProperty, false);
+                    }
+                    break;
+                    
+                case FlexiPaneContainer container:
+                    ClearAllSelections(container.FirstChild);
+                    ClearAllSelections(container.SecondChild);
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+#if DEBUG
+            System.Diagnostics.Debug.WriteLine($"[FlexiPanel] ClearAllSelections error: {ex.Message}");
+#endif
+        }
+    }
+    
+    /// <summary>
+    /// Gets all FlexiPaneItem instances in the child tree
+    /// </summary>
+    public List<FlexiPaneItem> GetAllPaneItems()
+    {
+        var items = new List<FlexiPaneItem>();
+        CollectPaneItems(RootContent, items);
+        return items;
+    }
+    
+    /// <summary>
+    /// Recursively collects all FlexiPaneItem instances
+    /// </summary>
+    private void CollectPaneItems(UIElement? element, List<FlexiPaneItem> items)
+    {
+        if (element == null) return;
+        
+        switch (element)
+        {
+            case FlexiPaneItem paneItem:
+                items.Add(paneItem);
+                break;
+                
+            case FlexiPaneContainer container:
+                CollectPaneItems(container.FirstChild, items);
+                CollectPaneItems(container.SecondChild, items);
+                break;
+        }
+    }
+    
+    /// <summary>
+    /// Validates and repairs selection consistency across the entire tree
+    /// </summary>
+    public void ValidateAndRepairSelection()
+    {
+        // Prevent recursion during validation
+        if (_isUpdatingSelection)
+        {
+#if DEBUG
+            System.Diagnostics.Debug.WriteLine($"[FlexiPanel] ValidateAndRepairSelection blocked - already updating selection");
+#endif
+            return;
+        }
+        
+        try
+        {
+            _isUpdatingSelection = true;
+            
+            var allItems = GetAllPaneItems();
+            var selectedItems = allItems.Where(item => item.IsSelected).ToList();
+            
+#if DEBUG
+            System.Diagnostics.Debug.WriteLine($"[FlexiPanel] ValidateAndRepairSelection - Total items: {allItems.Count}, Selected: {selectedItems.Count}");
+            foreach (var item in selectedItems)
+            {
+                System.Diagnostics.Debug.WriteLine($"  - Selected item: {item.PaneId}");
+            }
+#endif
+            
+            if (selectedItems.Count > 1)
+            {
+                // Multiple selections found - keep only the most recently selected one (SelectedItem property)
+#if DEBUG
+                System.Diagnostics.Debug.WriteLine($"[FlexiPanel] Multiple selections detected, repairing...");
+#endif
+                var itemToKeep = SelectedItem != null && selectedItems.Contains(SelectedItem) 
+                    ? SelectedItem 
+                    : selectedItems.FirstOrDefault();
+                    
+                EnsureSingleSelectionInternal(itemToKeep);
+                SelectedItem = itemToKeep;
+            }
+            else if (selectedItems.Count == 0 && allItems.Count > 0)
+            {
+                // No selection but items exist - select the first available item
+#if DEBUG
+                System.Diagnostics.Debug.WriteLine($"[FlexiPanel] No selection found, selecting first available item");
+#endif
+                var firstItem = allItems.FirstOrDefault();
+                if (firstItem != null)
+                {
+                    EnsureSingleSelectionInternal(firstItem);
+                    SelectedItem = firstItem;
+                }
+            }
+            else if (selectedItems.Count == 1)
+            {
+                // Exactly one selection - ensure SelectedItem property is in sync
+                var selectedItem = selectedItems[0];
+                if (SelectedItem != selectedItem)
+                {
+#if DEBUG
+                    System.Diagnostics.Debug.WriteLine($"[FlexiPanel] Syncing SelectedItem property with actual selection");
+#endif
+                    SelectedItem = selectedItem;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+#if DEBUG
+            System.Diagnostics.Debug.WriteLine($"[FlexiPanel] ValidateAndRepairSelection error: {ex.Message}");
+#endif
+        }
+        finally
+        {
+            _isUpdatingSelection = false;
+        }
     }
 
     /// <summary>

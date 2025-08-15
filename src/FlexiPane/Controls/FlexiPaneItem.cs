@@ -73,13 +73,36 @@ public class FlexiPaneItem : ContentControl, IDisposable
 
     private static void OnIsSelectedChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        if (d is FlexiPaneItem item && (bool)e.NewValue)
+        if (d is FlexiPaneItem item)
         {
-            // Notify FlexiPanel about selection change
-            var panel = FlexiPanel.FindAncestorPanel(item);
-            if (panel != null)
+            bool newValue = (bool)e.NewValue;
+            bool oldValue = (bool)e.OldValue;
+            
+#if DEBUG
+            System.Diagnostics.Debug.WriteLine($"[FlexiPaneItem] {item.PaneId} IsSelected changed: {oldValue} → {newValue}");
+#endif
+            
+            // Only process selection (true), not deselection to prevent recursion
+            if (newValue && !oldValue)
             {
-                panel.SetSelectedItem(item);
+                // Notify FlexiPanel about selection change
+                var panel = FlexiPanel.FindAncestorPanel(item);
+                if (panel != null)
+                {
+                    // Prevent recursion if panel is already updating selection
+                    if (panel.IsUpdatingSelection)
+                    {
+#if DEBUG
+                        System.Diagnostics.Debug.WriteLine($"[FlexiPaneItem] {item.PaneId} selection notification blocked - panel is updating");
+#endif
+                        return;
+                    }
+                    
+#if DEBUG
+                    System.Diagnostics.Debug.WriteLine($"[FlexiPaneItem] {item.PaneId} notifying FlexiPanel of selection");
+#endif
+                    panel.SetSelectedItem(item);
+                }
             }
         }
     }
@@ -532,20 +555,20 @@ public class FlexiPaneItem : ContentControl, IDisposable
     
     private void OnGotFocus(object sender, RoutedEventArgs e)
     {
+        if (IsSelected) return;
+
         // Mark this pane as selected when it receives focus
         IsSelected = true;
-        
+
         // Ensure keyboard input is properly handled
         this.Focus();
         Keyboard.Focus(this);
-        
-#if DEBUG
-        Debug.WriteLine($"[FlexiPaneItem] Got focus - IsSelected set to true, Keyboard focus set");
-#endif
     }
     
     private void OnMouseDown(object sender, MouseButtonEventArgs e)
     {
+        if (IsSelected) return;
+
         // Select this pane on mouse click and set keyboard focus
         IsSelected = true;
         this.Focus();
@@ -623,9 +646,6 @@ public class FlexiPaneItem : ContentControl, IDisposable
         // 패널이 존재하고 dispose되지 않았으면 언제든 닫기 가능
         // Split mode와 관계없이 닫기 허용
         bool canClose = !_isDisposed;
-#if DEBUG
-        Debug.WriteLine($"[FlexiPaneItem] CanExecuteClose - IsDisposed: {_isDisposed}, CanClose: {canClose}");
-#endif
         return canClose;
     }
 
