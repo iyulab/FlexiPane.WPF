@@ -693,8 +693,6 @@ public class FlexiPaneItem : ContentControl, IDisposable
     /// </summary>
     public void Split(bool isVerticalSplit, double splitRatio = 0.5, object? newContent = null)
     {
-        if (!CanSplit) return;
-        
         var args = new ContentRequestedEventArgs(this, isVerticalSplit, splitRatio)
         {
             RequestedContent = newContent

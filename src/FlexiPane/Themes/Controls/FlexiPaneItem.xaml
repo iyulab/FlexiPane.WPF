@@ -224,7 +224,7 @@
               BorderThickness="1"
               Command="{TemplateBinding CloseCommand}"
               Cursor="Hand"
-              ToolTip="Close Pane"
+              ToolTip="Close Pane(Ctrl+W)"
               Visibility="{Binding Path=IsSplitModeActive, RelativeSource={RelativeSource AncestorType=controls:FlexiPanel}, Converter={StaticResource BooleanToVisibilityConverter}}">
               <Button.Template>
                 <ControlTemplate TargetType="Button">
