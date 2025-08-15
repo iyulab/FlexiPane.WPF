@@ -37,7 +37,7 @@ public partial class MainWindowSimple : Window
         
         // FlexiPanel IsSplitModeActive 속성 변경도 직접 모니터링
         var descriptor = System.ComponentModel.DependencyPropertyDescriptor.FromProperty(
-            FlexiPane.Controls.FlexiPanel.IsSplitModeActiveInstanceProperty, 
+            FlexiPane.Controls.FlexiPanel.IsSplitModeActiveProperty, 
             typeof(FlexiPane.Controls.FlexiPanel));
         descriptor?.AddValueChanged(FlexiPanel, (s, e) => {
             System.Diagnostics.Debug.WriteLine($"🎛️ FlexiPanel.IsSplitModeActive changed to: {FlexiPanel.IsSplitModeActive}");

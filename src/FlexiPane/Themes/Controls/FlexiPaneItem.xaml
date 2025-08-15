@@ -12,21 +12,26 @@
     <Setter Property="BorderBrush" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="Padding" Value="0" />
+    <Setter Property="Focusable" Value="True" />
+    <Setter Property="IsTabStop" Value="True" />
     <Setter Property="Template">
       <Setter.Value>
         <ControlTemplate TargetType="{x:Type controls:FlexiPaneItem}">
-          <Grid x:Name="PART_ContainerGrid" Background="Transparent">
+          <Grid
+            x:Name="PART_ContainerGrid"
+            Background="Transparent"
+            Focusable="True">
 
-            <!--  Selection Border (shows when selected)  -->
+            <!--  Selection indicator (thin border at top)  -->
             <Border
               x:Name="SelectionBorder"
-              BorderBrush="#FF007ACC"
-              BorderThickness="2"
-              CornerRadius="2"
+              Height="2"
+              VerticalAlignment="Top"
+              Background="#FF007ACC"
               Visibility="Collapsed" />
 
             <!--  Actual content first  -->
-            <ContentPresenter />
+            <ContentPresenter Margin="0,2,0,0" />
 
             <!--  Mouse over effect (overlay on content)  -->
             <Border
