@@ -120,10 +120,9 @@ namespace FlexiPane.Controls
                 // Apply current split mode state to existing content if any
                 if (RootContent is FlexiPaneItem paneItem)
                 {
-                    // Propagate current split mode state
-                    SetIsSplitModeActive(paneItem, IsSplitModeActive);
+                    // Split mode is automatically inherited through WPF property inheritance
 #if DEBUG
-                    System.Diagnostics.Debug.WriteLine($"[FlexiPanel] OnLoaded - Updated FlexiPaneItem split mode: {GetIsSplitModeActive(paneItem)}");
+                    System.Diagnostics.Debug.WriteLine($"[FlexiPanel] OnLoaded - FlexiPaneItem found, split mode will be inherited");
 #endif
                     
                     // Select this pane if none is selected
@@ -191,52 +190,29 @@ namespace FlexiPane.Controls
             return CreateSamplePaneContent($"Panel {paneNumber}", selectedColor);
         }
 
-        #region Attached Properties (Inheritable)
-
-        /// <summary>
-        /// Split mode activation state (auto-inherited)
-        /// </summary>
-        public static readonly DependencyProperty IsSplitModeActiveProperty =
-            DependencyProperty.RegisterAttached("IsSplitModeActive", typeof(bool), typeof(FlexiPanel),
-                new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.Inherits));
-
-        public static void SetIsSplitModeActive(DependencyObject element, bool value)
-        {
-            element.SetValue(IsSplitModeActiveProperty, value);
-        }
-
-        public static bool GetIsSplitModeActive(DependencyObject element)
-        {
-            return (bool)element.GetValue(IsSplitModeActiveProperty);
-        }
-
-        #endregion
-
         #region Instance Properties
 
         /// <summary>
-        /// Global split mode state (instance property)
+        /// Global split mode state - single source of truth
         /// </summary>
         public bool IsSplitModeActive
         {
-            get { return (bool)GetValue(IsSplitModeActiveInstanceProperty); }
-            set { SetValue(IsSplitModeActiveInstanceProperty, value); }
+            get { return (bool)GetValue(IsSplitModeActiveProperty); }
+            set { SetValue(IsSplitModeActiveProperty, value); }
         }
 
-        public static readonly DependencyProperty IsSplitModeActiveInstanceProperty =
-            DependencyProperty.Register("IsSplitModeActiveInstance", typeof(bool), typeof(FlexiPanel),
-                new PropertyMetadata(false, OnIsSplitModeActiveInstanceChanged));
+        public static readonly DependencyProperty IsSplitModeActiveProperty =
+            DependencyProperty.Register(nameof(IsSplitModeActive), typeof(bool), typeof(FlexiPanel),
+                new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.Inherits, OnIsSplitModeActiveChanged));
 
-        private static void OnIsSplitModeActiveInstanceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        private static void OnIsSplitModeActiveChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             if (d is FlexiPanel panel)
             {
                 bool isActive = (bool)e.NewValue;
 #if DEBUG
-                System.Diagnostics.Debug.WriteLine($"[FlexiPanel] IsSplitModeActive instance property changed: {isActive}");
+                System.Diagnostics.Debug.WriteLine($"[FlexiPanel] IsSplitModeActive changed: {isActive}");
 #endif
-                // Sync with attached property
-                SetIsSplitModeActive(panel, isActive);
                 panel.OnSplitModeChangedInternal(isActive);
             }
         }
@@ -287,8 +263,8 @@ namespace FlexiPane.Controls
             
             if (args.Cancel)
             {
-                // Cancel change - restore previous value
-                SetIsSplitModeActive(this, !isActive);
+                // Cancel change - restore previous value (직접 속성 설정)
+                IsSplitModeActive = !isActive;
                 return;
             }
             
@@ -365,43 +341,6 @@ namespace FlexiPane.Controls
         #endregion
 
         #region Property Changed Handlers
-
-        private static void OnSplitModeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-        {
-            if (d is FlexiPanel panel)
-            {
-                bool isActive = (bool)e.NewValue;
-                
-#if DEBUG
-                System.Diagnostics.Debug.WriteLine($"[FlexiPanel] Split mode changed: {isActive}");
-#endif
-                
-                // Raise event (cancellable)
-                var args = new SplitModeChangedEventArgs(isActive, (bool)e.OldValue)
-                {
-                    RoutedEvent = SplitModeChangedEvent
-                };
-                panel.RaiseEvent(args);
-                
-                if (args.Cancel)
-                {
-                    // Cancel change - restore previous value
-                    panel.IsSplitModeActive = (bool)e.OldValue;
-                    return;
-                }
-                
-                
-                // Propagate to Attached Property
-                SetIsSplitModeActive(panel, isActive);
-                
-                // Also propagate to RootContent and child elements
-                if (panel.RootContent != null)
-                {
-                    // WPF binding handles property inheritance automatically
-                }
-            }
-        }
-
 
         private static void OnRootContentChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {

@@ -352,19 +352,11 @@ namespace FlexiPane.Controls
 
         private void OnSplitOverlayClick(object sender, MouseButtonEventArgs e)
         {
-            // FlexiPanel 인스턴스의 분할 모드 상태를 직접 확인
-            var flexiPanel = FlexiPanel.FindAncestorPanel(this);
-            var isSplitModeActive = flexiPanel?.IsSplitModeActive ?? false;
-            
-#if DEBUG
-            Debug.WriteLine($"[FlexiPaneItem] SPLIT CLICK - IsSplitModeActive (Panel): {isSplitModeActive}, CanSplit: {CanSplit}");
-#endif
-
-            // Check split mode and CanSplit
-            if (!isSplitModeActive || !CanSplit)
+            // Split overlay에서 이벤트가 발생했다는 것은 이미 분할 모드가 활성화된 것
+            if (!CanSplit)
             {
 #if DEBUG
-                Debug.WriteLine($"[FlexiPaneItem] SPLIT IGNORED - IsSplitModeActive: {isSplitModeActive}, CanSplit: {CanSplit}");
+                Debug.WriteLine($"[FlexiPaneItem] SPLIT IGNORED - CanSplit: {CanSplit}");
 #endif
                 return;
             }
@@ -445,15 +437,12 @@ namespace FlexiPane.Controls
         
         private void OnSplitOverlayMouseMove(object sender, MouseEventArgs e)
         {
-            // FlexiPanel 인스턴스의 분할 모드 상태를 직접 확인
-            var flexiPanel = FlexiPanel.FindAncestorPanel(this);
-            var isSplitModeActive = flexiPanel?.IsSplitModeActive ?? false;
-
-            // Check split mode and CanSplit - proper validation restored
-            if (!isSplitModeActive || !CanSplit || _splitOverlay == null) 
+            // Split overlay가 표시되어 있다면 이미 분할 모드가 활성화된 것
+            // 불필요한 추가 검증 제거
+            if (!CanSplit || _splitOverlay == null) 
             {
 #if DEBUG
-                Debug.WriteLine($"[FlexiPaneItem] Mouse move ignored - IsSplitModeActive: {isSplitModeActive}, CanSplit: {CanSplit}");
+                Debug.WriteLine($"[FlexiPaneItem] Mouse move ignored - CanSplit: {CanSplit}");
 #endif
                 return;
             }
@@ -510,12 +499,8 @@ namespace FlexiPane.Controls
         
         private void OnSplitOverlayMouseEnter(object sender, MouseEventArgs e)
         {
-            var flexiPanel = FlexiPanel.FindAncestorPanel(this);
-            var isSplitModeActive = flexiPanel?.IsSplitModeActive ?? false;
-            
 #if DEBUG
             Debug.WriteLine($"[FlexiPaneItem] Mouse ENTER split overlay");
-            Debug.WriteLine($"   - SplitModeActive: {isSplitModeActive}");
             Debug.WriteLine($"   - CanSplit: {CanSplit}");
             Debug.WriteLine($"   - Overlay size: {_splitOverlay?.ActualWidth:F2}x{_splitOverlay?.ActualHeight:F2}");
 #endif
@@ -607,14 +592,14 @@ namespace FlexiPane.Controls
 
         private bool CanExecuteClose(object? parameter)
         {
-            var flexiPanel = FlexiPanel.FindAncestorPanel(this);
-            return (flexiPanel?.IsSplitModeActive ?? false) && !_isDisposed;
+            // 단순화: 오버레이가 표시되어 있으면 닫기 가능
+            return _splitOverlay?.Visibility == Visibility.Visible && !_isDisposed;
         }
 
         private bool CanSplitNow()
         {
-            var flexiPanel = FlexiPanel.FindAncestorPanel(this);
-            return CanSplit && (flexiPanel?.IsSplitModeActive ?? false) && !_isDisposed;
+            // 단순화: CanSplit과 오버레이 가시성만 확인
+            return CanSplit && _splitOverlay?.Visibility == Visibility.Visible && !_isDisposed;
         }
 
         private void RequestSplit(bool isVerticalSplit, double splitRatio = 0.5)
