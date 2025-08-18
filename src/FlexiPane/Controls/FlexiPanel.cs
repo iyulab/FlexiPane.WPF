@@ -666,16 +666,30 @@ public partial class FlexiPanel : Control
     #region Public Methods
     
     /// <summary>
+    /// Split the currently selected pane
+    /// </summary>
+    /// <param name="isVerticalSplit">True for vertical split, false for horizontal split</param>
+    /// <param name="splitRatio">Split ratio (0.1 to 0.9), default 0.5</param>
+    /// <param name="newContent">Content for the new pane</param>
+    public void Split(bool isVerticalSplit, double splitRatio = 0.5, UIElement? newContent = null)
+    {
+        // Ensure we have a splittable pane and prepare for splitting
+        PrepareForSplitting();
+        
+        if (SelectedItem != null && SelectedItem.CanSplit)
+        {
+            SelectedItem.SplitInternal(isVerticalSplit, splitRatio, newContent);
+        }
+    }
+    
+    /// <summary>
     /// Split the currently selected pane vertically
     /// </summary>
     /// <param name="splitRatio">Split ratio (0.1 to 0.9), default 0.5</param>
     /// <param name="newContent">Content for the new pane</param>
     public void SplitSelectedVertically(double splitRatio = 0.5, UIElement? newContent = null)
     {
-        if (SelectedItem != null && SelectedItem.CanSplit)
-        {
-            SelectedItem.Split(true, splitRatio, newContent);
-        }
+        Split(true, splitRatio, newContent);
     }
     
     /// <summary>
@@ -685,10 +699,7 @@ public partial class FlexiPanel : Control
     /// <param name="newContent">Content for the new pane</param>
     public void SplitSelectedHorizontally(double splitRatio = 0.5, UIElement? newContent = null)
     {
-        if (SelectedItem != null && SelectedItem.CanSplit)
-        {
-            SelectedItem.Split(false, splitRatio, newContent);
-        }
+        Split(false, splitRatio, newContent);
     }
     
     /// <summary>
@@ -951,6 +962,82 @@ public partial class FlexiPanel : Control
         }
         
         return null;
+    }
+    
+    #endregion
+
+    #region Split Preparation Methods
+    
+    /// <summary>
+    /// Prepare the panel for splitting operations
+    /// Ensures we have a valid FlexiPaneItem that can be split
+    /// </summary>
+    private void PrepareForSplitting()
+    {
+#if DEBUG
+        System.Diagnostics.Debug.WriteLine($"[FlexiPanel] PrepareForSplitting - Current state: RootContent={RootContent?.GetType().Name}, SelectedItem={SelectedItem?.PaneId}");
+#endif
+
+        // If we don't have any content, create initial splittable content
+        if (RootContent == null)
+        {
+#if DEBUG
+            System.Diagnostics.Debug.WriteLine($"[FlexiPanel] PrepareForSplitting - No RootContent, creating initial splittable pane");
+#endif
+            CreateSplittablePaneWithEvent();
+            return;
+        }
+
+        // If RootContent is not a FlexiPaneItem or FlexiPaneContainer, wrap it
+        if (RootContent is not FlexiPaneItem && RootContent is not FlexiPaneContainer)
+        {
+#if DEBUG
+            System.Diagnostics.Debug.WriteLine($"[FlexiPanel] PrepareForSplitting - RootContent is not splittable, wrapping in FlexiPaneItem");
+#endif
+            var wrappedItem = new FlexiPaneItem
+            {
+                Title = "Main Panel",
+                CanSplit = true,
+                Content = RootContent
+            };
+            RootContent = wrappedItem;
+            wrappedItem.IsSelected = true;
+            return;
+        }
+
+        // Ensure we have a selected item
+        if (SelectedItem == null)
+        {
+#if DEBUG
+            System.Diagnostics.Debug.WriteLine($"[FlexiPanel] PrepareForSplitting - No SelectedItem, finding first available");
+#endif
+            var firstPane = FindFirstSelectablePane();
+            if (firstPane != null)
+            {
+                firstPane.IsSelected = true;
+            }
+            else
+            {
+#if DEBUG
+                System.Diagnostics.Debug.WriteLine($"[FlexiPanel] PrepareForSplitting - No selectable pane found, creating new one");
+#endif
+                CreateSplittablePaneWithEvent();
+                return;
+            }
+        }
+
+        // Ensure the selected item can split
+        if (SelectedItem != null && !SelectedItem.CanSplit)
+        {
+#if DEBUG
+            System.Diagnostics.Debug.WriteLine($"[FlexiPanel] PrepareForSplitting - Enabling CanSplit on selected item");
+#endif
+            SelectedItem.CanSplit = true;
+        }
+
+#if DEBUG
+        System.Diagnostics.Debug.WriteLine($"[FlexiPanel] PrepareForSplitting completed - SelectedItem={SelectedItem?.PaneId}, CanSplit={SelectedItem?.CanSplit}");
+#endif
     }
     
     #endregion

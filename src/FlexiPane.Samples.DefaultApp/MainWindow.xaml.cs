@@ -499,12 +499,14 @@ FlexiPane.WPF ready.",
 
         private void SplitVerticalButton_Click(object sender, RoutedEventArgs e)
         {
-            FlexiPanel.SplitSelectedVertically(0.5, CreateDefaultContent());
+            // 새로운 FlexiPanel.Split() API 사용 - 분할모드 진입 없이 바로 분할 가능
+            FlexiPanel.Split(true, 0.5, CreateDefaultContent());
         }
 
         private void SplitHorizontalButton_Click(object sender, RoutedEventArgs e)
         {
-            FlexiPanel.SplitSelectedHorizontally(0.5, CreateDefaultContent());
+            // 새로운 FlexiPanel.Split() API 사용 - 분할모드 진입 없이 바로 분할 가능
+            FlexiPanel.Split(false, 0.5, CreateDefaultContent());
         }
 
         private void SaveLayoutButton_Click(object sender, RoutedEventArgs e)

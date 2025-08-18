@@ -669,8 +669,8 @@ public class FlexiPaneItem : ContentControl, IDisposable
         Debug.WriteLine($"[FlexiPaneItem] CREATING SPLIT EVENT - IsVertical: {isVerticalSplit}, Ratio: {splitRatio:F2}");
 #endif
 
-        var args = new ContentRequestedEventArgs(this, isVerticalSplit, splitRatio);
-        OnSplitRequested(args);
+        // Use internal split method
+        SplitInternal(isVerticalSplit, splitRatio);
     }
 
     #endregion
@@ -689,15 +689,52 @@ public class FlexiPaneItem : ContentControl, IDisposable
     }
 
     /// <summary>
-    /// Split panel
+    /// Split panel (internal use only - use FlexiPanel.Split() instead)
     /// </summary>
-    public void Split(bool isVerticalSplit, double splitRatio = 0.5, object? newContent = null)
+    internal void SplitInternal(bool isVerticalSplit, double splitRatio = 0.5, object? newContent = null)
     {
         var args = new ContentRequestedEventArgs(this, isVerticalSplit, splitRatio)
         {
             RequestedContent = newContent
         };
-        OnSplitRequested(args);
+        
+        // If content is already provided, skip ContentRequested event and handle split directly
+        if (newContent != null)
+        {
+#if DEBUG
+            Debug.WriteLine($"[FlexiPaneItem] SplitInternal - Content provided, skipping ContentRequested event");
+#endif
+            // Directly process the split with provided content
+            args.Handled = true;
+            
+            // Use FlexiPaneManager to handle the split directly
+            var result = Managers.FlexiPaneManager.SplitPane(this, isVerticalSplit, splitRatio, newContent as UIElement);
+            if (result != null)
+            {
+#if DEBUG
+                Debug.WriteLine($"[FlexiPaneItem] SplitInternal - Direct split successful");
+#endif
+                // Find parent FlexiPanel and validate selection
+                var panel = FlexiPanel.FindAncestorPanel(this);
+                panel?.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, new Action(() =>
+                {
+                    panel.ValidateAndRepairSelection();
+                }));
+            }
+            else
+            {
+#if DEBUG
+                Debug.WriteLine($"[FlexiPaneItem] SplitInternal - Direct split failed, falling back to ContentRequested event");
+#endif
+                // Fall back to ContentRequested event if direct split fails
+                OnSplitRequested(args);
+            }
+        }
+        else
+        {
+            // No content provided, use ContentRequested event to get content
+            OnSplitRequested(args);
+        }
     }
 
 
