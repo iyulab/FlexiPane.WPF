@@ -204,6 +204,12 @@
                       HorizontalAlignment="Center"
                       FontSize="12"
                       Foreground="#FF666666"
+                      Text="SPACE: Toggle direction" />
+                    <TextBlock
+                      Margin="6,2"
+                      HorizontalAlignment="Center"
+                      FontSize="12"
+                      Foreground="#FF666666"
                       Text="ESC: Exit split mode" />
                   </StackPanel>
                 </Border>

@@ -527,6 +527,17 @@ public class FlexiPaneItem : ContentControl, IDisposable
                 directionChanged = true;
             }
         }
+        else
+        {
+            // Not on any edge - use FlexiPanel's preferred direction
+            var flexiPanel = FlexiPanel.FindAncestorPanel(this);
+            var preferredDirection = flexiPanel?.PreferredSplitDirection ?? true;
+            if (_currentSplitDirection != preferredDirection)
+            {
+                _currentSplitDirection = preferredDirection;
+                directionChanged = true;
+            }
+        }
 
         if (directionChanged)
         {
@@ -587,8 +598,9 @@ public class FlexiPaneItem : ContentControl, IDisposable
         
         if (_splitOverlay != null && _splitOverlay.Visibility == Visibility.Visible)
         {
-            // Split mode activated - initialize state
-            _currentSplitDirection = true; // Reset to vertical split
+            // Split mode activated - initialize state with FlexiPanel's preferred direction
+            var flexiPanel = FlexiPanel.FindAncestorPanel(this);
+            _currentSplitDirection = flexiPanel?.PreferredSplitDirection ?? true; // Use panel's preferred direction or default to vertical
             UpdateSplitModeGuideText();
             
             // Set focus for ESC key handling

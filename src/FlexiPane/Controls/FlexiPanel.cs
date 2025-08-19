@@ -275,6 +275,19 @@ public partial class FlexiPanel : Control
         DependencyProperty.Register(nameof(CloseSelectedPaneCommand), typeof(ICommand), typeof(FlexiPanel),
             new PropertyMetadata(null));
 
+    /// <summary>
+    /// Preferred split direction - true for vertical, false for horizontal
+    /// </summary>
+    public bool PreferredSplitDirection
+    {
+        get { return (bool)GetValue(PreferredSplitDirectionProperty); }
+        set { SetValue(PreferredSplitDirectionProperty, value); }
+    }
+
+    public static readonly DependencyProperty PreferredSplitDirectionProperty =
+        DependencyProperty.Register(nameof(PreferredSplitDirection), typeof(bool), typeof(FlexiPanel),
+            new PropertyMetadata(false)); // Default to horizontal split
+
     #endregion
 
     #region Internal Property Handlers
@@ -638,6 +651,15 @@ public partial class FlexiPanel : Control
 #endif
             }
         }
+        else if (e.Key == Key.Space && Keyboard.Modifiers == ModifierKeys.None && IsSplitModeActive)
+        {
+            // Space - Toggle split direction when in split mode
+            ToggleSplitDirection();
+            e.Handled = true;
+#if DEBUG
+            System.Diagnostics.Debug.WriteLine($"[FlexiPanel] Space released - Toggled split direction to: {(PreferredSplitDirection ? "Vertical" : "Horizontal")}");
+#endif
+        }
     }
 
     #endregion
@@ -937,6 +959,17 @@ public partial class FlexiPanel : Control
         {
             CloseSelectedPaneCommand.Execute(null);
         }
+    }
+
+    /// <summary>
+    /// Toggle split direction between vertical and horizontal
+    /// </summary>
+    public void ToggleSplitDirection()
+    {
+        PreferredSplitDirection = !PreferredSplitDirection;
+#if DEBUG
+        System.Diagnostics.Debug.WriteLine($"[FlexiPanel] Split direction toggled to: {(PreferredSplitDirection ? "Vertical" : "Horizontal")}");
+#endif
     }
     
     /// <summary>
