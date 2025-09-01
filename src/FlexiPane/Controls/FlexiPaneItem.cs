@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -78,10 +77,6 @@ public class FlexiPaneItem : ContentControl, IDisposable
             bool newValue = (bool)e.NewValue;
             bool oldValue = (bool)e.OldValue;
             
-#if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[FlexiPaneItem] {item.PaneId} IsSelected changed: {oldValue} → {newValue}");
-#endif
-            
             // Only process selection (true), not deselection to prevent recursion
             if (newValue && !oldValue)
             {
@@ -92,15 +87,9 @@ public class FlexiPaneItem : ContentControl, IDisposable
                     // Prevent recursion if panel is already updating selection
                     if (panel.IsUpdatingSelection)
                     {
-#if DEBUG
-                        System.Diagnostics.Debug.WriteLine($"[FlexiPaneItem] {item.PaneId} selection notification blocked - panel is updating");
-#endif
                         return;
                     }
                     
-#if DEBUG
-                    System.Diagnostics.Debug.WriteLine($"[FlexiPaneItem] {item.PaneId} notifying FlexiPanel of selection");
-#endif
                     panel.SetSelectedItem(item);
                 }
             }
@@ -268,15 +257,6 @@ public class FlexiPaneItem : ContentControl, IDisposable
         _horizontalGuideLine = GetTemplateChild("PART_HorizontalGuideLine") as Rectangle;
         _defaultGuidePanel = GetTemplateChild("PART_DefaultGuidePanel") as Border;
 
-#if DEBUG
-        Debug.WriteLine($"[FlexiPaneItem] OnApplyTemplate - Template elements found:");
-        Debug.WriteLine($"   - ContainerGrid: {_containerGrid != null}");
-        Debug.WriteLine($"   - SplitOverlay: {_splitOverlay != null}");
-        Debug.WriteLine($"   - VerticalGuideLine: {_verticalGuideLine != null}");
-        Debug.WriteLine($"   - HorizontalGuideLine: {_horizontalGuideLine != null}");
-        Debug.WriteLine($"   - DefaultGuidePanel: {_defaultGuidePanel != null}");
-#endif
-
         // Connect event handlers
         ConnectEventHandlers();
 
@@ -304,9 +284,6 @@ public class FlexiPaneItem : ContentControl, IDisposable
             // Set focus when split mode is activated
             this.Focus();
             Keyboard.Focus(this);
-#if DEBUG
-            Debug.WriteLine($"[FlexiPaneItem] Split mode state initialized - Focus set for ESC key handling, direction reset to VERTICAL");
-#endif
         }
     }
 
@@ -319,9 +296,6 @@ public class FlexiPaneItem : ContentControl, IDisposable
             _splitOverlay.MouseLeave += OnSplitOverlayMouseLeave;
             _splitOverlay.MouseEnter += OnSplitOverlayMouseEnter;
             _splitOverlay.IsVisibleChanged += OnSplitOverlayVisibilityChanged;
-#if DEBUG
-            Debug.WriteLine($"[FlexiPaneItem] Connected split overlay events - Visibility: {_splitOverlay.Visibility}");
-#endif
         }
 
         this.PreviewKeyUp += OnPreviewKeyUp;
@@ -355,18 +329,12 @@ public class FlexiPaneItem : ContentControl, IDisposable
     {
         // Auto-connect events to FlexiPaneManager on load
         Managers.FlexiPaneManager.ConnectPaneEvents(this);
-#if DEBUG
-        Debug.WriteLine($"[FlexiPaneItem] OnLoaded - Connected to FlexiPaneManager");
-#endif
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
         // Disconnect events from FlexiPaneManager on unload
         Managers.FlexiPaneManager.DisconnectPaneEvents(this);
-#if DEBUG
-        Debug.WriteLine($"[FlexiPaneItem] OnUnloaded - Disconnected from FlexiPaneManager");
-#endif
     }
 
 
@@ -375,9 +343,6 @@ public class FlexiPaneItem : ContentControl, IDisposable
         // Split overlay에서 이벤트가 발생했다는 것은 이미 분할 모드가 활성화된 것
         if (!CanSplit)
         {
-#if DEBUG
-            Debug.WriteLine($"[FlexiPaneItem] SPLIT IGNORED - CanSplit: {CanSplit}");
-#endif
             return;
         }
 
@@ -385,10 +350,6 @@ public class FlexiPaneItem : ContentControl, IDisposable
         var position = e.GetPosition(_splitOverlay);
         var width = _splitOverlay!.ActualWidth;
         var height = _splitOverlay!.ActualHeight;
-
-#if DEBUG
-        Debug.WriteLine($"[FlexiPaneItem] Click position: ({position.X:F2}, {position.Y:F2}), Overlay size: {width:F2}x{height:F2}");
-#endif
 
         // Edge area size (same as UpdateGuideLines)
         const double edgeThreshold = 24;
@@ -402,9 +363,6 @@ public class FlexiPaneItem : ContentControl, IDisposable
         // Skip split if clicking on edge areas (direction already changed on hover)
         if (isLeftEdge || isRightEdge || isTopEdge || isBottomEdge)
         {
-#if DEBUG
-            Debug.WriteLine($"[FlexiPaneItem] Click on edge area - no split performed (direction already set on hover)");
-#endif
             return; // Don't perform split on edge areas
         }
 
@@ -416,25 +374,15 @@ public class FlexiPaneItem : ContentControl, IDisposable
         {
             // Vertical split - use X position for ratio
             splitRatio = position.X / width;
-#if DEBUG
-            Debug.WriteLine($"[FlexiPaneItem] Performing VERTICAL split - splitRatio: {splitRatio:F2}");
-#endif
         }
         else
         {
             // Horizontal split - use Y position for ratio
             splitRatio = position.Y / height;
-#if DEBUG
-            Debug.WriteLine($"[FlexiPaneItem] Performing HORIZONTAL split - splitRatio: {splitRatio:F2}");
-#endif
         }
 
         // Limit split ratio range
         splitRatio = Math.Max(0.1, Math.Min(0.9, splitRatio));
-
-#if DEBUG
-        Debug.WriteLine($"[FlexiPaneItem] REQUESTING SPLIT - IsVertical: {isVerticalSplit}, Ratio: {splitRatio:F2}");
-#endif
 
         RequestSplit(isVerticalSplit, splitRatio);
     }
@@ -448,36 +396,26 @@ public class FlexiPaneItem : ContentControl, IDisposable
             {
                 flexiPanel.IsSplitModeActive = false;
                 e.Handled = true;
-#if DEBUG
-                Debug.WriteLine($"[FlexiPaneItem] ESC key released (Preview) - Split mode disabled");
-#endif
             }
         }
         else if (e.Key == Key.W && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
         {
             // Ctrl+W - Close the current pane (same as clicking close button)
-#if DEBUG
-            Debug.WriteLine($"[FlexiPaneItem] Ctrl+W detected - IsSelected: {IsSelected}, CloseCommand: {CloseCommand != null}");
-            if (CloseCommand != null)
-            {
-                bool canExecute = CloseCommand.CanExecute(null);
-                Debug.WriteLine($"[FlexiPaneItem] CloseCommand.CanExecute: {canExecute}");
-            }
-#endif
             
             if (IsSelected && CloseCommand?.CanExecute(null) == true)
             {
                 CloseCommand.Execute(null);
                 e.Handled = true;
-#if DEBUG
-                Debug.WriteLine($"[FlexiPaneItem] Ctrl+W released (Preview) - Closing selected pane");
-#endif
             }
-            else
+        }
+        else if (e.Key == Key.Space && Keyboard.Modifiers == ModifierKeys.None)
+        {
+            var flexiPanel = FlexiPanel.FindAncestorPanel(this);
+            if (flexiPanel != null && flexiPanel.IsSplitModeActive && IsSelected)
             {
-#if DEBUG
-                Debug.WriteLine($"[FlexiPaneItem] Ctrl+W blocked - IsSelected: {IsSelected}, CanExecute: {CloseCommand?.CanExecute(null)}");
-#endif
+                // Space - Toggle split direction when in split mode and this pane is selected
+                flexiPanel.ToggleSplitDirection();
+                e.Handled = true;
             }
         }
     }
@@ -488,9 +426,6 @@ public class FlexiPaneItem : ContentControl, IDisposable
         // 불필요한 추가 검증 제거
         if (!CanSplit || _splitOverlay == null) 
         {
-#if DEBUG
-            Debug.WriteLine($"[FlexiPaneItem] Mouse move ignored - CanSplit: {CanSplit}");
-#endif
             return;
         }
 
@@ -511,7 +446,7 @@ public class FlexiPaneItem : ContentControl, IDisposable
 
         if (isLeftEdge || isRightEdge)
         {
-            // Hovering over left/right edge - set to horizontal split
+            // 좌우영역 오버 → 상하분할모드: HORIZONTAL split (가로선으로 나누어 상하로 분할)
             if (_currentSplitDirection != false)
             {
                 _currentSplitDirection = false;
@@ -520,7 +455,7 @@ public class FlexiPaneItem : ContentControl, IDisposable
         }
         else if (isTopEdge || isBottomEdge)
         {
-            // Hovering over top/bottom edge - set to vertical split
+            // 상하영역 오버 → 좌우분할모드: VERTICAL split (세로선으로 나누어 좌우로 분할)
             if (_currentSplitDirection != true)
             {
                 _currentSplitDirection = true;
@@ -529,14 +464,10 @@ public class FlexiPaneItem : ContentControl, IDisposable
         }
         else
         {
-            // Not on any edge - use FlexiPanel's preferred direction
-            var flexiPanel = FlexiPanel.FindAncestorPanel(this);
-            var preferredDirection = flexiPanel?.PreferredSplitDirection ?? true;
-            if (_currentSplitDirection != preferredDirection)
-            {
-                _currentSplitDirection = preferredDirection;
-                directionChanged = true;
-            }
+            // Not on any edge - MAINTAIN current split direction
+            // The direction should only change when:
+            // 1. Hovering over edge areas
+            // 2. Space key is pressed (handled separately)
         }
 
         if (directionChanged)
@@ -549,19 +480,11 @@ public class FlexiPaneItem : ContentControl, IDisposable
 
     private void OnSplitOverlayMouseLeave(object sender, MouseEventArgs e)
     {
-#if DEBUG
-        Debug.WriteLine($"[FlexiPaneItem] Mouse LEAVE split overlay");
-#endif
         HideGuideLines();
     }
     
     private void OnSplitOverlayMouseEnter(object sender, MouseEventArgs e)
     {
-#if DEBUG
-        Debug.WriteLine($"[FlexiPaneItem] Mouse ENTER split overlay");
-        Debug.WriteLine($"   - CanSplit: {CanSplit}");
-        Debug.WriteLine($"   - Overlay size: {_splitOverlay?.ActualWidth:F2}x{_splitOverlay?.ActualHeight:F2}");
-#endif
     }
     
     private void OnGotFocus(object sender, RoutedEventArgs e)
@@ -584,18 +507,10 @@ public class FlexiPaneItem : ContentControl, IDisposable
         IsSelected = true;
         this.Focus();
         Keyboard.Focus(this);
-        
-#if DEBUG
-        Debug.WriteLine($"[FlexiPaneItem] Mouse down - IsSelected set to true, focus and keyboard focus set");
-#endif
     }
 
     private void OnSplitOverlayVisibilityChanged(object sender, DependencyPropertyChangedEventArgs e)
     {
-#if DEBUG
-        Debug.WriteLine($"[FlexiPaneItem] OnSplitOverlayVisibilityChanged - NewValue: {e.NewValue}, OldValue: {e.OldValue}");
-#endif
-        
         if (_splitOverlay != null && _splitOverlay.Visibility == Visibility.Visible)
         {
             // Split mode activated - initialize state with FlexiPanel's preferred direction
@@ -606,21 +521,11 @@ public class FlexiPaneItem : ContentControl, IDisposable
             // Set focus for ESC key handling
             this.Focus();
             Keyboard.Focus(this);
-            
-#if DEBUG
-            Debug.WriteLine($"[FlexiPaneItem] Split mode activated - Direction reset to VERTICAL, focus set for ESC key handling");
-            Debug.WriteLine($"   - SplitOverlay actual size: {_splitOverlay.ActualWidth:F2}x{_splitOverlay.ActualHeight:F2}");
-            Debug.WriteLine($"   - SplitOverlay render size: {_splitOverlay.RenderSize.Width:F2}x{_splitOverlay.RenderSize.Height:F2}");
-#endif
         }
         else
         {
             // Split mode deactivated - hide guide lines
             HideGuideLines();
-            
-#if DEBUG
-            Debug.WriteLine($"[FlexiPaneItem] Split mode deactivated - Guide lines hidden");
-#endif
         }
     }
 
@@ -633,23 +538,12 @@ public class FlexiPaneItem : ContentControl, IDisposable
         var flexiPanel = FlexiPanel.FindAncestorPanel(this);
         var isSplitModeActive = flexiPanel?.IsSplitModeActive ?? false;
         
-#if DEBUG
-        Debug.WriteLine($"[FlexiPaneItem] ExecuteClose called - IsSplitModeActive: {isSplitModeActive}, IsDisposed: {_isDisposed}");
-#endif
-        
         var args = new PaneClosingEventArgs(this, PaneCloseReason.UserRequest);
         OnClosing(args);
-
-#if DEBUG
-        Debug.WriteLine($"[FlexiPaneItem] After OnClosing - Cancel: {args.Cancel}");
-#endif
 
         if (!args.Cancel)
         {
             OnClosed(new PaneClosedEventArgs(this, PaneCloseReason.UserRequest));
-#if DEBUG
-            Debug.WriteLine($"[FlexiPaneItem] OnClosed completed");
-#endif
         }
     }
 
@@ -671,15 +565,8 @@ public class FlexiPaneItem : ContentControl, IDisposable
     {
         if (!CanSplitNow()) 
         {
-#if DEBUG
-            Debug.WriteLine($"[FlexiPaneItem] SPLIT BLOCKED - CanSplit: {CanSplit}, IsDisposed: {_isDisposed}");
-#endif
             return;
         }
-
-#if DEBUG
-        Debug.WriteLine($"[FlexiPaneItem] CREATING SPLIT EVENT - IsVertical: {isVerticalSplit}, Ratio: {splitRatio:F2}");
-#endif
 
         // Use internal split method
         SplitInternal(isVerticalSplit, splitRatio);
@@ -713,9 +600,6 @@ public class FlexiPaneItem : ContentControl, IDisposable
         // If content is already provided, skip ContentRequested event and handle split directly
         if (newContent != null)
         {
-#if DEBUG
-            Debug.WriteLine($"[FlexiPaneItem] SplitInternal - Content provided, skipping ContentRequested event");
-#endif
             // Directly process the split with provided content
             args.Handled = true;
             
@@ -723,9 +607,6 @@ public class FlexiPaneItem : ContentControl, IDisposable
             var result = Managers.FlexiPaneManager.SplitPane(this, isVerticalSplit, splitRatio, newContent as UIElement);
             if (result != null)
             {
-#if DEBUG
-                Debug.WriteLine($"[FlexiPaneItem] SplitInternal - Direct split successful");
-#endif
                 // Find parent FlexiPanel and validate selection
                 var panel = FlexiPanel.FindAncestorPanel(this);
                 panel?.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, new Action(() =>
@@ -735,9 +616,6 @@ public class FlexiPaneItem : ContentControl, IDisposable
             }
             else
             {
-#if DEBUG
-                Debug.WriteLine($"[FlexiPaneItem] SplitInternal - Direct split failed, falling back to ContentRequested event");
-#endif
                 // Fall back to ContentRequested event if direct split fails
                 OnSplitRequested(args);
             }
@@ -756,9 +634,6 @@ public class FlexiPaneItem : ContentControl, IDisposable
 
     protected virtual void OnSplitRequested(ContentRequestedEventArgs e)
     {
-#if DEBUG
-        Debug.WriteLine($"[FlexiPaneItem] RAISING CONTENT REQUEST EVENT - Routing to FlexiPanel");
-#endif
         // Bubble up to FlexiPanel's Routed Event
         e.RoutedEvent = FlexiPanel.ContentRequestedEvent;
         RaiseEvent(e);
@@ -766,9 +641,6 @@ public class FlexiPaneItem : ContentControl, IDisposable
 
     protected virtual void OnClosing(PaneClosingEventArgs e)
     {
-#if DEBUG
-        Debug.WriteLine($"[FlexiPaneItem] OnClosing - Raising routed event");
-#endif
         // Bubble up to FlexiPanel's Routed Event
         e.RoutedEvent = FlexiPanel.PaneClosingEvent;
         RaiseEvent(e);
@@ -951,13 +823,26 @@ public class FlexiPaneItem : ContentControl, IDisposable
             // Force garbage collection of weak references
             GC.Collect(0, GCCollectionMode.Optimized);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-#if DEBUG
-            System.Diagnostics.Debug.WriteLine($"FlexiPaneItem Dispose error: {ex.Message}");
-#endif
         }
     }
 
+    #endregion
+    
+    #region Public Methods
+    
+    /// <summary>
+    /// Force update the current split direction (used when Space key is pressed)
+    /// </summary>
+    internal void UpdateCurrentSplitDirection(bool newDirection)
+    {
+        if (_currentSplitDirection != newDirection)
+        {
+            _currentSplitDirection = newDirection;
+            UpdateSplitModeGuideText();
+        }
+    }
+    
     #endregion
 }

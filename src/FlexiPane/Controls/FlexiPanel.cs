@@ -74,21 +74,9 @@ public partial class FlexiPanel : Control
         // Use Dispatcher to ensure bindings are fully established
         Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.DataBind, new Action(() =>
         {
-#if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[FlexiPanel] OnLoaded - RootContent is null: {RootContent == null}");
-            System.Diagnostics.Debug.WriteLine($"[FlexiPanel] OnLoaded - IsSplitModeActive: {IsSplitModeActive}");
-            if (RootContent != null)
-            {
-                System.Diagnostics.Debug.WriteLine($"[FlexiPanel] OnLoaded - Existing RootContent type: {RootContent.GetType().Name}");
-            }
-#endif
-            
             // Try to get initial content from ContentRequested event now that handlers are connected
             if (IsDefaultContent(RootContent))
             {
-#if DEBUG
-                System.Diagnostics.Debug.WriteLine($"[FlexiPanel] OnLoaded - Requesting initial content via ContentRequested event");
-#endif
                 var contentEventArgs = new Events.ContentRequestedEventArgs("InitialContent")
                 {
                     RoutedEvent = ContentRequestedEvent
@@ -100,23 +88,13 @@ public partial class FlexiPanel : Control
                 // Use requested content if provided
                 if (contentEventArgs.RequestedContent is UIElement requestedContent)
                 {
-#if DEBUG
-                    System.Diagnostics.Debug.WriteLine($"[FlexiPanel] OnLoaded - Got content from event: {requestedContent.GetType().Name}");
-#endif
-                    
                     // FlexiPaneItem이 아니면 자동으로 래핑
                     if (requestedContent is FlexiPaneItem)
                     {
-#if DEBUG
-                        System.Diagnostics.Debug.WriteLine($"[FlexiPanel] OnLoaded - Content is already FlexiPaneItem, using directly");
-#endif
                         RootContent = requestedContent;
                     }
                     else
                     {
-#if DEBUG
-                        System.Diagnostics.Debug.WriteLine($"[FlexiPanel] OnLoaded - Wrapping content in FlexiPaneItem for splitting capability");
-#endif
                         var wrappedItem = new FlexiPaneItem
                         {
                             Title = "Main Panel",
@@ -127,21 +105,12 @@ public partial class FlexiPanel : Control
                         RootContent = wrappedItem;
                     }
                 }
-                else
-                {
-#if DEBUG
-                    System.Diagnostics.Debug.WriteLine($"[FlexiPanel] OnLoaded - No content provided from event, keeping default");
-#endif
-                }
             }
             
             // Apply current split mode state to existing content if any
             if (RootContent is FlexiPaneItem paneItem)
             {
                 // Split mode is automatically inherited through WPF property inheritance
-#if DEBUG
-                System.Diagnostics.Debug.WriteLine($"[FlexiPanel] OnLoaded - FlexiPaneItem found, split mode will be inherited");
-#endif
                 
                 // Select this pane if none is selected
                 if (SelectedItem == null)
@@ -228,9 +197,6 @@ public partial class FlexiPanel : Control
         if (d is FlexiPanel panel)
         {
             bool isActive = (bool)e.NewValue;
-#if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[FlexiPanel] IsSplitModeActive changed: {isActive}");
-#endif
             panel.OnSplitModeChangedInternal(isActive);
         }
     }
@@ -301,21 +267,11 @@ public partial class FlexiPanel : Control
             {
                 command.RaiseCanExecuteChanged();
             }
-            
-#if DEBUG
-            var oldItem = e.OldValue as FlexiPaneItem;
-            var newItem = e.NewValue as FlexiPaneItem;
-            System.Diagnostics.Debug.WriteLine($"[FlexiPanel] SelectedItem changed: {oldItem?.PaneId ?? "null"} → {newItem?.PaneId ?? "null"}");
-#endif
         }
     }
     
     private void OnSplitModeChangedInternal(bool isActive)
     {
-#if DEBUG
-        System.Diagnostics.Debug.WriteLine($"[FlexiPanel] Internal split mode changed: {isActive}");
-#endif
-        
         // Raise event (cancellable)
         var args = new SplitModeChangedEventArgs(isActive, !isActive)
         {
@@ -337,9 +293,6 @@ public partial class FlexiPanel : Control
             // Check if we already have any FlexiPaneItem (single or in container)
             if (RootContent is FlexiPaneItem existingPane)
             {
-#if DEBUG
-                System.Diagnostics.Debug.WriteLine($"[FlexiPanel] Split mode activated - existing single FlexiPaneItem found, enabling split capability");
-#endif
                 // Just enable splitting on existing pane
                 existingPane.CanSplit = true;
                 // Split mode state is inherited through WPF binding
@@ -352,17 +305,11 @@ public partial class FlexiPanel : Control
             }
             else if (RootContent is FlexiPaneContainer)
             {
-#if DEBUG
-                System.Diagnostics.Debug.WriteLine($"[FlexiPanel] Split mode activated - existing FlexiPaneContainer found, enabling split capability on all panes");
-#endif
                 // Enable splitting on all panes within the container
                 EnableSplitModeRecursively(RootContent, true);
             }
             else
             {
-#if DEBUG
-                System.Diagnostics.Debug.WriteLine($"[FlexiPanel] Split mode activated - no suitable pane structure found, creating new one");
-#endif
                 // Create new splittable pane only if we don't have one
                 CreateSplittablePaneWithEvent();
             }
@@ -372,25 +319,16 @@ public partial class FlexiPanel : Control
             // When split mode is deactivated, preserve existing structure but disable splitting
             if (RootContent is FlexiPaneItem existingPane)
             {
-#if DEBUG
-                System.Diagnostics.Debug.WriteLine($"[FlexiPanel] Split mode deactivated - disabling split capability on single pane");
-#endif
                 existingPane.CanSplit = false;
                 // Split mode state is inherited through WPF binding
             }
             else if (RootContent is FlexiPaneContainer)
             {
-#if DEBUG
-                System.Diagnostics.Debug.WriteLine($"[FlexiPanel] Split mode deactivated - preserving FlexiPaneContainer structure, disabling split capability on all panes");
-#endif
                 // Preserve the container structure but disable splitting on all panes
                 EnableSplitModeRecursively(RootContent, false);
             }
             else
             {
-#if DEBUG
-                System.Diagnostics.Debug.WriteLine($"[FlexiPanel] Split mode deactivated - no pane structure exists, showing info content");
-#endif
                 // Show info content if no pane structure exists
                 RootContent = CreateSimpleInfoContent();
             }
@@ -503,11 +441,6 @@ public partial class FlexiPanel : Control
     {
         if (e.RequestType == ContentRequestType.SplitPane)
         {
-#if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[FlexiPanel] RECEIVED SPLIT CONTENT REQUEST - IsVertical: {e.IsVerticalSplit}, Ratio: {e.SplitRatio:F2}");
-            System.Diagnostics.Debug.WriteLine($"[FlexiPanel] Content already set: {e.RequestedContent != null} (Type: {e.RequestedContent?.GetType().Name ?? "null"})");
-#endif
-            
             // Skip if event is already handled
             if (e.Handled)
                 return;
@@ -518,10 +451,6 @@ public partial class FlexiPanel : Control
                 // Skip if event is cancelled or already handled
                 if (e.Cancel || e.Handled)
                     return;
-                    
-#if DEBUG
-                System.Diagnostics.Debug.WriteLine($"[FlexiPanel] DELAYED PROCESSING - Content type after other handlers: {e.RequestedContent?.GetType().Name ?? "null"}");
-#endif
                 
                 // Call FlexiPaneManager's split processing method
                 if (e.SourcePane != null && e.IsVerticalSplit.HasValue && e.SplitRatio.HasValue && !e.Cancel)
@@ -530,9 +459,6 @@ public partial class FlexiPanel : Control
                     UIElement? contentToUse = e.RequestedContent as System.Windows.UIElement;
                     if (contentToUse == null)
                     {
-#if DEBUG
-                        System.Diagnostics.Debug.WriteLine($"[FlexiPanel] Auto-generating content for new pane");
-#endif
                         contentToUse = CreateAutoGeneratedPaneContent();
                         e.RequestedContent = contentToUse;
                     }
@@ -545,16 +471,10 @@ public partial class FlexiPanel : Control
                     
                     if (result == null)
                     {
-#if DEBUG
-                        System.Diagnostics.Debug.WriteLine($"[FlexiPanel] SPLIT FAILED - Setting Cancel = true");
-#endif
                         e.Cancel = true;
                     }
                     else
                     {
-#if DEBUG
-                        System.Diagnostics.Debug.WriteLine($"[FlexiPanel] SPLIT SUCCESS - Container created");
-#endif
                         e.Handled = true;
                         
                         // Validate and repair selection after split operation
@@ -569,18 +489,11 @@ public partial class FlexiPanel : Control
         else if (e.RequestType == ContentRequestType.InitialPane)
         {
             // Handle initial content requests - do nothing by default, let user handlers process
-#if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[FlexiPanel] Initial content request: {e.Purpose}");
-#endif
         }
     }
 
     private void OnPaneClosing(object? sender, PaneClosingEventArgs e)
     {
-#if DEBUG
-        System.Diagnostics.Debug.WriteLine($"[FlexiPanel] OnPaneClosing - Processing close request for pane");
-#endif
-
         // Actual close processing through FlexiPaneManager
         if (e.Pane != null)
         {
@@ -588,9 +501,6 @@ public partial class FlexiPanel : Control
             var totalPanes = CountTotalPanes();
             if (totalPanes <= 1)
             {
-#if DEBUG
-                System.Diagnostics.Debug.WriteLine($"[FlexiPanel] Last panel closing. Current count: {totalPanes}");
-#endif
                 // Raise last panel closing event
                 var lastPaneArgs = new LastPaneClosingEventArgs(e.Pane, e.Reason)
                 {
@@ -607,9 +517,6 @@ public partial class FlexiPanel : Control
                 
                 // Allow closing last panel (remove content)
                 RootContent = null!;
-#if DEBUG
-                System.Diagnostics.Debug.WriteLine($"[FlexiPanel] Last panel closed - RootContent cleared");
-#endif
                 return;
             }
 
@@ -617,17 +524,10 @@ public partial class FlexiPanel : Control
             var success = Managers.FlexiPaneManager.ClosePane(e.Pane);
             if (!success)
             {
-#if DEBUG
-                System.Diagnostics.Debug.WriteLine($"[FlexiPanel] ClosePane failed, cancelling close operation");
-#endif
                 e.Cancel = true;
             }
             else
             {
-#if DEBUG
-                System.Diagnostics.Debug.WriteLine($"[FlexiPanel] ClosePane succeeded. Remaining panes: {CountTotalPanes()}");
-#endif
-                
                 // Validate and repair selection after close operation
                 Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, new Action(() =>
                 {
@@ -646,9 +546,6 @@ public partial class FlexiPanel : Control
             {
                 CloseSelectedPaneCommand.Execute(null);
                 e.Handled = true;
-#if DEBUG
-                System.Diagnostics.Debug.WriteLine($"[FlexiPanel] Ctrl+W released (Preview) - Closing selected pane via FlexiPanel command");
-#endif
             }
         }
         else if (e.Key == Key.Space && Keyboard.Modifiers == ModifierKeys.None && IsSplitModeActive)
@@ -656,9 +553,6 @@ public partial class FlexiPanel : Control
             // Space - Toggle split direction when in split mode
             ToggleSplitDirection();
             e.Handled = true;
-#if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[FlexiPanel] Space released - Toggled split direction to: {(PreferredSplitDirection ? "Vertical" : "Horizontal")}");
-#endif
         }
     }
 
@@ -670,9 +564,6 @@ public partial class FlexiPanel : Control
     {
         if (SelectedItem != null && SelectedItem.CloseCommand?.CanExecute(null) == true)
         {
-#if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[FlexiPanel] ExecuteCloseSelectedPane - Closing pane: {SelectedItem.PaneId}");
-#endif
             SelectedItem.CloseCommand.Execute(null);
         }
     }
@@ -732,18 +623,12 @@ public partial class FlexiPanel : Control
         // Prevent recursion during selection updates
         if (_isUpdatingSelection)
         {
-#if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[FlexiPanel] SetSelectedItem blocked - already updating selection");
-#endif
             return;
         }
         
         // Prevent recursion and verify the item is actually in our tree
         if (item != null && !IsItemInTree(item))
         {
-#if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[FlexiPanel] SetSelectedItem rejected - item {item.PaneId} not found in tree");
-#endif
             return;
         }
         
@@ -819,9 +704,6 @@ public partial class FlexiPanel : Control
                     // Directly set the backing field to prevent recursive events
                     if (paneItem.IsSelected)
                     {
-#if DEBUG
-                        System.Diagnostics.Debug.WriteLine($"[FlexiPanel] Clearing selection for {paneItem.PaneId}");
-#endif
                         paneItem.SetCurrentValue(FlexiPaneItem.IsSelectedProperty, false);
                     }
                     break;
@@ -832,11 +714,9 @@ public partial class FlexiPanel : Control
                     break;
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-#if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[FlexiPanel] ClearAllSelections error: {ex.Message}");
-#endif
+            // Silently handle exceptions during selection clearing
         }
     }
     
@@ -878,9 +758,6 @@ public partial class FlexiPanel : Control
         // Prevent recursion during validation
         if (_isUpdatingSelection)
         {
-#if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[FlexiPanel] ValidateAndRepairSelection blocked - already updating selection");
-#endif
             return;
         }
         
@@ -891,20 +768,9 @@ public partial class FlexiPanel : Control
             var allItems = GetAllPaneItems();
             var selectedItems = allItems.Where(item => item.IsSelected).ToList();
             
-#if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[FlexiPanel] ValidateAndRepairSelection - Total items: {allItems.Count}, Selected: {selectedItems.Count}");
-            foreach (var item in selectedItems)
-            {
-                System.Diagnostics.Debug.WriteLine($"  - Selected item: {item.PaneId}");
-            }
-#endif
-            
             if (selectedItems.Count > 1)
             {
                 // Multiple selections found - keep only the most recently selected one (SelectedItem property)
-#if DEBUG
-                System.Diagnostics.Debug.WriteLine($"[FlexiPanel] Multiple selections detected, repairing...");
-#endif
                 var itemToKeep = SelectedItem != null && selectedItems.Contains(SelectedItem) 
                     ? SelectedItem 
                     : selectedItems.FirstOrDefault();
@@ -915,9 +781,6 @@ public partial class FlexiPanel : Control
             else if (selectedItems.Count == 0 && allItems.Count > 0)
             {
                 // No selection but items exist - select the first available item
-#if DEBUG
-                System.Diagnostics.Debug.WriteLine($"[FlexiPanel] No selection found, selecting first available item");
-#endif
                 var firstItem = allItems.FirstOrDefault();
                 if (firstItem != null)
                 {
@@ -931,18 +794,13 @@ public partial class FlexiPanel : Control
                 var selectedItem = selectedItems[0];
                 if (SelectedItem != selectedItem)
                 {
-#if DEBUG
-                    System.Diagnostics.Debug.WriteLine($"[FlexiPanel] Syncing SelectedItem property with actual selection");
-#endif
                     SelectedItem = selectedItem;
                 }
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-#if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[FlexiPanel] ValidateAndRepairSelection error: {ex.Message}");
-#endif
+            // Silently handle validation errors
         }
         finally
         {
@@ -967,9 +825,32 @@ public partial class FlexiPanel : Control
     public void ToggleSplitDirection()
     {
         PreferredSplitDirection = !PreferredSplitDirection;
-#if DEBUG
-        System.Diagnostics.Debug.WriteLine($"[FlexiPanel] Split direction toggled to: {(PreferredSplitDirection ? "Vertical" : "Horizontal")}");
-#endif
+        
+        // Update all FlexiPaneItems with the new direction
+        UpdateAllPaneItemDirections(PreferredSplitDirection);
+    }
+    
+    /// <summary>
+    /// Update all FlexiPaneItem directions when Space key is pressed
+    /// </summary>
+    private void UpdateAllPaneItemDirections(bool newDirection)
+    {
+        UpdatePaneItemDirectionsRecursive(RootContent, newDirection);
+    }
+    
+    private void UpdatePaneItemDirectionsRecursive(UIElement? element, bool newDirection)
+    {
+        if (element == null) return;
+        
+        if (element is FlexiPaneItem paneItem)
+        {
+            paneItem.UpdateCurrentSplitDirection(newDirection);
+        }
+        else if (element is FlexiPaneContainer container)
+        {
+            UpdatePaneItemDirectionsRecursive(container.FirstChild, newDirection);
+            UpdatePaneItemDirectionsRecursive(container.SecondChild, newDirection);
+        }
     }
     
     /// <summary>
@@ -1007,16 +888,9 @@ public partial class FlexiPanel : Control
     /// </summary>
     private void PrepareForSplitting()
     {
-#if DEBUG
-        System.Diagnostics.Debug.WriteLine($"[FlexiPanel] PrepareForSplitting - Current state: RootContent={RootContent?.GetType().Name}, SelectedItem={SelectedItem?.PaneId}");
-#endif
-
         // If we don't have any content, create initial splittable content
         if (RootContent == null)
         {
-#if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[FlexiPanel] PrepareForSplitting - No RootContent, creating initial splittable pane");
-#endif
             CreateSplittablePaneWithEvent();
             return;
         }
@@ -1024,9 +898,6 @@ public partial class FlexiPanel : Control
         // If RootContent is not a FlexiPaneItem or FlexiPaneContainer, wrap it
         if (RootContent is not FlexiPaneItem && RootContent is not FlexiPaneContainer)
         {
-#if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[FlexiPanel] PrepareForSplitting - RootContent is not splittable, wrapping in FlexiPaneItem");
-#endif
             var wrappedItem = new FlexiPaneItem
             {
                 Title = "Main Panel",
@@ -1041,9 +912,6 @@ public partial class FlexiPanel : Control
         // Ensure we have a selected item
         if (SelectedItem == null)
         {
-#if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[FlexiPanel] PrepareForSplitting - No SelectedItem, finding first available");
-#endif
             var firstPane = FindFirstSelectablePane();
             if (firstPane != null)
             {
@@ -1051,9 +919,6 @@ public partial class FlexiPanel : Control
             }
             else
             {
-#if DEBUG
-                System.Diagnostics.Debug.WriteLine($"[FlexiPanel] PrepareForSplitting - No selectable pane found, creating new one");
-#endif
                 CreateSplittablePaneWithEvent();
                 return;
             }
@@ -1062,15 +927,8 @@ public partial class FlexiPanel : Control
         // Ensure the selected item can split
         if (SelectedItem != null && !SelectedItem.CanSplit)
         {
-#if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[FlexiPanel] PrepareForSplitting - Enabling CanSplit on selected item");
-#endif
             SelectedItem.CanSplit = true;
         }
-
-#if DEBUG
-        System.Diagnostics.Debug.WriteLine($"[FlexiPanel] PrepareForSplitting completed - SelectedItem={SelectedItem?.PaneId}, CanSplit={SelectedItem?.CanSplit}");
-#endif
     }
     
     #endregion
@@ -1082,19 +940,11 @@ public partial class FlexiPanel : Control
     /// </summary>
     private void CreateSplittablePaneWithEvent()
     {
-#if DEBUG
-        System.Diagnostics.Debug.WriteLine($"[FlexiPanel] CreateSplittablePaneWithEvent - Requesting initial content");
-#endif
-        
         // Request initial content from the application
         var contentEventArgs = new Events.ContentRequestedEventArgs("InitialPane")
         {
             RoutedEvent = ContentRequestedEvent
         };
-        
-#if DEBUG
-        System.Diagnostics.Debug.WriteLine($"[FlexiPanel] CreateSplittablePaneWithEvent - Raising ContentRequested for initial content");
-#endif
         
         // Raise the event to get content from the application  
         RaiseEvent(contentEventArgs);
@@ -1103,24 +953,14 @@ public partial class FlexiPanel : Control
         FlexiPaneItem initialPane;
         if (contentEventArgs.RequestedContent is UIElement requestedContent)
         {
-#if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[FlexiPanel] CreateSplittablePaneWithEvent - Got content from event: {requestedContent.GetType().Name}");
-#endif
-            
             // FlexiPaneItem이면 그대로 사용, 아니면 래핑
             if (requestedContent is FlexiPaneItem existingPane)
             {
-#if DEBUG
-                System.Diagnostics.Debug.WriteLine($"[FlexiPanel] CreateSplittablePaneWithEvent - Content is already FlexiPaneItem, using directly");
-#endif
                 initialPane = existingPane;
                 initialPane.CanSplit = true; // 분할 가능하도록 설정
             }
             else
             {
-#if DEBUG
-                System.Diagnostics.Debug.WriteLine($"[FlexiPanel] CreateSplittablePaneWithEvent - Wrapping content in FlexiPaneItem for splitting capability");
-#endif
                 initialPane = new FlexiPaneItem
                 {
                     Title = "Main Panel",
@@ -1132,9 +972,6 @@ public partial class FlexiPanel : Control
         }
         else
         {
-#if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[FlexiPanel] CreateSplittablePaneWithEvent - No content provided, using default");
-#endif
             initialPane = new FlexiPaneItem
             {
                 Title = "Main Panel",
@@ -1247,41 +1084,20 @@ public partial class FlexiPanel : Control
     {
         if (element == null)
         {
-#if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[FlexiPanel] CountPanes - null element, returning 0");
-#endif
             return 0;
         }
-
-#if DEBUG
-        System.Diagnostics.Debug.WriteLine($"[FlexiPanel] CountPanes - Examining element: {element.GetType().Name}");
-#endif
 
         switch (element)
         {
             case FlexiPaneItem:
-#if DEBUG
-                System.Diagnostics.Debug.WriteLine($"[FlexiPanel] CountPanes - Found FlexiPaneItem, returning 1");
-#endif
                 return 1;
 
             case FlexiPaneContainer container:
-#if DEBUG
-                System.Diagnostics.Debug.WriteLine($"[FlexiPanel] CountPanes - Found FlexiPaneContainer, checking children");
-                System.Diagnostics.Debug.WriteLine($"[FlexiPanel] CountPanes - FirstChild: {container.FirstChild?.GetType().Name ?? "null"}");
-                System.Diagnostics.Debug.WriteLine($"[FlexiPanel] CountPanes - SecondChild: {container.SecondChild?.GetType().Name ?? "null"}");
-#endif
                 var firstCount = CountPanesRecursively(container.FirstChild);
                 var secondCount = CountPanesRecursively(container.SecondChild);
-#if DEBUG
-                System.Diagnostics.Debug.WriteLine($"[FlexiPanel] CountPanes - FirstChild count: {firstCount}, SecondChild count: {secondCount}, Total: {firstCount + secondCount}");
-#endif
                 return firstCount + secondCount;
 
             default:
-#if DEBUG
-                System.Diagnostics.Debug.WriteLine($"[FlexiPanel] CountPanes - Unknown element type: {element.GetType().Name}, returning 0");
-#endif
                 return 0;
         }
     }
@@ -1291,9 +1107,6 @@ public partial class FlexiPanel : Control
     /// </summary>
     internal void UpdateRootContent(UIElement? newContent)
     {
-#if DEBUG
-        System.Diagnostics.Debug.WriteLine($"[FlexiPanel] UpdateRootContent - Old: {RootContent?.GetType().Name ?? "null"}, New: {newContent?.GetType().Name ?? "null"}");
-#endif
         RootContent = newContent!;
         
         // Force immediate and complete UI tree update
@@ -1305,9 +1118,6 @@ public partial class FlexiPanel : Control
         // Schedule additional template applications after the UI has been updated
         Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.ApplicationIdle, new System.Action(() =>
         {
-#if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[FlexiPanel] Deferred RootContent template application");
-#endif
             if (newContent != null)
             {
                 // Apply template if it's a templated control
@@ -1333,9 +1143,6 @@ public partial class FlexiPanel : Control
         switch (element)
         {
             case FlexiPaneContainer container:
-#if DEBUG
-                System.Diagnostics.Debug.WriteLine($"[FlexiPanel] ApplyTemplatesRecursively - FlexiPaneContainer");
-#endif
                 container.ApplyTemplate();
                 container.UpdateLayout();
                 if (container.FirstChild != null)
@@ -1345,17 +1152,11 @@ public partial class FlexiPanel : Control
                 break;
                 
             case FlexiPaneItem paneItem:
-#if DEBUG
-                System.Diagnostics.Debug.WriteLine($"[FlexiPanel] ApplyTemplatesRecursively - FlexiPaneItem");
-#endif
                 paneItem.ApplyTemplate();
                 paneItem.UpdateLayout();
                 break;
                 
             case Control control:
-#if DEBUG
-                System.Diagnostics.Debug.WriteLine($"[FlexiPanel] ApplyTemplatesRecursively - Control: {control.GetType().Name}");
-#endif
                 control.ApplyTemplate();
                 control.UpdateLayout();
                 break;

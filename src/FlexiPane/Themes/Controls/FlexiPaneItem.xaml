@@ -91,14 +91,14 @@
                   Fill="#FFFF0000"
                   Opacity="0" />
 
-                <!--  Top guide (auto-set to vertical split on hover)  -->
+                <!--  Top guide (상하영역 오버 → 좌우분할모드)  -->
                 <Border
                   Height="24"
                   VerticalAlignment="Top"
                   Background="#60007ACC"
                   BorderBrush="#FF007ACC"
                   BorderThickness="0,0,0,1"
-                  ToolTip="Hover to set VERTICAL split mode">
+                  ToolTip="상하영역 오버 → 좌우분할모드 (VERTICAL split)">
                   <StackPanel
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
@@ -111,14 +111,14 @@
                   </StackPanel>
                 </Border>
 
-                <!--  Bottom guide (auto-set to vertical split on hover)  -->
+                <!--  Bottom guide (상하영역 오버 → 좌우분할모드)  -->
                 <Border
                   Height="24"
                   VerticalAlignment="Bottom"
                   Background="#60007ACC"
                   BorderBrush="#FF007ACC"
                   BorderThickness="0,1,0,0"
-                  ToolTip="Hover to set VERTICAL split mode">
+                  ToolTip="상하영역 오버 → 좌우분할모드 (VERTICAL split)">
                   <StackPanel
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
@@ -131,14 +131,14 @@
                   </StackPanel>
                 </Border>
 
-                <!--  Left guide (auto-set to horizontal split on hover)  -->
+                <!--  Left guide (좌우영역 오버 → 상하분할모드)  -->
                 <Border
                   Width="24"
                   HorizontalAlignment="Left"
                   Background="#6000CC44"
                   BorderBrush="#FF00CC44"
                   BorderThickness="0,0,1,0"
-                  ToolTip="Hover to set HORIZONTAL split mode">
+                  ToolTip="좌우영역 오버 → 상하분할모드 (HORIZONTAL split)">
                   <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                     <TextBlock
                       FontSize="16"
@@ -148,14 +148,14 @@
                   </StackPanel>
                 </Border>
 
-                <!--  Right guide (auto-set to horizontal split on hover)  -->
+                <!--  Right guide (좌우영역 오버 → 상하분할모드)  -->
                 <Border
                   Width="24"
                   HorizontalAlignment="Right"
                   Background="#6000CC44"
                   BorderBrush="#FF00CC44"
                   BorderThickness="1,0,0,0"
-                  ToolTip="Hover to set HORIZONTAL split mode">
+                  ToolTip="좌우영역 오버 → 상하분할모드 (HORIZONTAL split)">
                   <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                     <TextBlock
                       FontSize="16"

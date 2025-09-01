@@ -22,26 +22,15 @@ public static class FlexiPaneManager
         double splitRatio,
         UIElement? newContent = null)
     {
-#if DEBUG
-        System.Diagnostics.Debug.WriteLine($"[FlexiPaneManager] === SPLIT START ===");
-        System.Diagnostics.Debug.WriteLine($"[FlexiPaneManager] Split {(isVerticalSplit ? "VERTICAL" : "HORIZONTAL")} at ratio {splitRatio:F2}");
-#endif
-
         // 1. Validate inputs
         if (sourcePane == null)
         {
-#if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[FlexiPaneManager] ERROR: sourcePane is null");
-#endif
             return null;
         }
 
         var flexiPanel = FlexiPanel.FindAncestorPanel(sourcePane);
         if (flexiPanel == null)
         {
-#if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[FlexiPaneManager] ERROR: No FlexiPanel found");
-#endif
             return null;
         }
 
@@ -49,9 +38,6 @@ public static class FlexiPaneManager
         var newContainer = CreateSplitContainer(sourcePane, isVerticalSplit, splitRatio, newContent, flexiPanel);
         if (newContainer == null)
         {
-#if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[FlexiPaneManager] ERROR: Failed to create split container");
-#endif
             return null;
         }
 
@@ -59,15 +45,9 @@ public static class FlexiPaneManager
         bool success = ReplaceInTree(sourcePane, newContainer, flexiPanel);
         if (!success)
         {
-#if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[FlexiPaneManager] ERROR: Failed to replace in tree");
-#endif
             return null;
         }
 
-#if DEBUG
-        System.Diagnostics.Debug.WriteLine($"[FlexiPaneManager] === SPLIT SUCCESS ===");
-#endif
         return newContainer;
     }
 
@@ -81,10 +61,6 @@ public static class FlexiPaneManager
         UIElement? newContent,
         FlexiPanel flexiPanel)
     {
-#if DEBUG
-        System.Diagnostics.Debug.WriteLine($"[FlexiPaneManager] Creating split container");
-#endif
-
         // Create container with properties set first
         var container = new FlexiPaneContainer
         {
@@ -93,9 +69,6 @@ public static class FlexiPaneManager
         };
 
         // Force immediate template application BEFORE setting children
-#if DEBUG
-        System.Diagnostics.Debug.WriteLine($"[FlexiPaneManager] Forcing template application BEFORE setting children");
-#endif
         
         // Multiple attempts to ensure template is applied
         for (int i = 0; i < 3; i++)
@@ -109,10 +82,6 @@ public static class FlexiPaneManager
             System.Windows.Threading.Dispatcher.CurrentDispatcher.Invoke(
                 System.Windows.Threading.DispatcherPriority.Render, 
                 new Action(() => { }));
-            
-#if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[FlexiPaneManager] Template application attempt {i + 1}");
-#endif
         }
 
         // Create new pane
@@ -123,19 +92,12 @@ public static class FlexiPaneManager
         };
 
         // Now set children after template is ready
-#if DEBUG
-        System.Diagnostics.Debug.WriteLine($"[FlexiPaneManager] Setting children AFTER template application");
-#endif
         
         container.FirstChild = sourcePane;
         container.SecondChild = newPane;
 
         // Final layout update
         container.UpdateLayout();
-
-#if DEBUG
-        System.Diagnostics.Debug.WriteLine($"[FlexiPaneManager] Container created - FirstChild: {container.FirstChild?.GetType().Name}, SecondChild: {container.SecondChild?.GetType().Name}");
-#endif
 
         return container;
     }
@@ -145,16 +107,9 @@ public static class FlexiPaneManager
     /// </summary>
     private static bool ReplaceInTree(UIElement oldElement, UIElement newElement, FlexiPanel flexiPanel)
     {
-#if DEBUG
-        System.Diagnostics.Debug.WriteLine($"[FlexiPaneManager] Replacing {oldElement.GetType().Name} with {newElement.GetType().Name}");
-#endif
-
         // Case 1: sourcePane is FlexiPanel.RootContent (Scenario 1 from docs)
         if (flexiPanel.RootContent == oldElement)
         {
-#if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[FlexiPaneManager] Replacing RootContent directly");
-#endif
             flexiPanel.RootContent = newElement;
             return true;
         }
@@ -163,10 +118,6 @@ public static class FlexiPaneManager
         var parentContainer = FindParentContainer(oldElement, flexiPanel);
         if (parentContainer != null)
         {
-#if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[FlexiPaneManager] Replacing in parent container");
-#endif
-            
             if (parentContainer.FirstChild == oldElement)
             {
                 parentContainer.FirstChild = newElement;
@@ -179,9 +130,6 @@ public static class FlexiPaneManager
             }
         }
 
-#if DEBUG
-        System.Diagnostics.Debug.WriteLine($"[FlexiPaneManager] ERROR: Could not find replacement location");
-#endif
         return false;
     }
 
@@ -263,25 +211,15 @@ public static class FlexiPaneManager
     /// </summary>
     public static bool ClosePane(FlexiPaneItem paneToClose)
     {
-#if DEBUG
-        System.Diagnostics.Debug.WriteLine($"[FlexiPaneManager] === CLOSE START ===");
-#endif
-
         var flexiPanel = FlexiPanel.FindAncestorPanel(paneToClose);
         if (flexiPanel == null)
         {
-#if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[FlexiPaneManager] ERROR: No FlexiPanel found");
-#endif
             return false;
         }
 
         // Case 1: Last panel (RootContent is FlexiPaneItem)
         if (flexiPanel.RootContent == paneToClose)
         {
-#if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[FlexiPaneManager] Closing last panel");
-#endif
             flexiPanel.RootContent = null!;
             return true;
         }
@@ -290,9 +228,6 @@ public static class FlexiPaneManager
         var parentContainer = FindParentContainer(paneToClose, flexiPanel);
         if (parentContainer == null)
         {
-#if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[FlexiPaneManager] ERROR: No parent container found");
-#endif
             return false;
         }
 
@@ -309,16 +244,10 @@ public static class FlexiPaneManager
 
         if (sibling == null)
         {
-#if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[FlexiPaneManager] ERROR: No sibling found");
-#endif
             return false;
         }
 
         // Step 3: Properly detach sibling and dispose container
-#if DEBUG
-        System.Diagnostics.Debug.WriteLine($"[FlexiPaneManager] Detaching sibling from parent container");
-#endif
         
         // First, detach sibling from container
         if (parentContainer.FirstChild == sibling)
@@ -341,23 +270,14 @@ public static class FlexiPaneManager
         }
 
         // Dispose of the container to clean up its template and prevent visual tree conflicts
-#if DEBUG
-        System.Diagnostics.Debug.WriteLine($"[FlexiPaneManager] Disposing parent container to prevent template conflicts");
-#endif
         if (parentContainer is IDisposable disposableContainer)
         {
             disposableContainer.Dispose();
         }
 
         // Step 4: Replace container with sibling
-#if DEBUG
-        System.Diagnostics.Debug.WriteLine($"[FlexiPaneManager] Replacing FlexiPaneContainer with {sibling.GetType().Name}");
-#endif
         bool success = ReplaceInTree(parentContainer, sibling, flexiPanel);
 
-#if DEBUG
-        System.Diagnostics.Debug.WriteLine($"[FlexiPaneManager] === CLOSE {(success ? "SUCCESS" : "FAILED")} ===");
-#endif
         return success;
     }
 

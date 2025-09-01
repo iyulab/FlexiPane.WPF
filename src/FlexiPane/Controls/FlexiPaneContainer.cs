@@ -102,17 +102,9 @@ public class FlexiPaneContainer : Control, IDisposable
     {
         if (d is FlexiPaneContainer container && !container._isDisposed)
         {
-#if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[FlexiPaneContainer] OnChildChanged - Property: {e.Property.Name}, OldValue: {e.OldValue?.GetType().Name}, NewValue: {e.NewValue?.GetType().Name}");
-            System.Diagnostics.Debug.WriteLine($"[FlexiPaneContainer] Template applied: {container._containerGrid != null}");
-#endif
-            
             // Force immediate template application if not ready
             if (container._containerGrid == null && !container._isApplyingTemplate)
             {
-#if DEBUG
-                System.Diagnostics.Debug.WriteLine($"[FlexiPaneContainer] Template not ready - forcing immediate application");
-#endif
                 container.ApplyTemplate();
                 
                 // Force UI thread processing to ensure template is applied
@@ -153,35 +145,14 @@ public class FlexiPaneContainer : Control, IDisposable
         
         base.OnApplyTemplate();
 
-#if DEBUG
-        System.Diagnostics.Debug.WriteLine($"[FlexiPaneContainer] OnApplyTemplate START - Getting template grid");
-#endif
-
         _containerGrid = GetTemplateChild("PART_ContainerGrid") as Grid;
-        
-#if DEBUG
-        System.Diagnostics.Debug.WriteLine($"[FlexiPaneContainer] OnApplyTemplate COMPLETE - ContainerGrid: {_containerGrid != null}");
-        if (_containerGrid != null)
-        {
-            System.Diagnostics.Debug.WriteLine($"[FlexiPaneContainer] ContainerGrid details - ActualWidth: {_containerGrid.ActualWidth}, ActualHeight: {_containerGrid.ActualHeight}");
-        }
-#endif
         
         _isApplyingTemplate = false;
         
         // Force immediate layout update after template is applied
         if (_containerGrid != null && FirstChild != null && SecondChild != null)
         {
-#if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[FlexiPaneContainer] Template applied successfully - forcing immediate layout update");
-#endif
             UpdateLayout();
-        }
-        else
-        {
-#if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[FlexiPaneContainer] Template applied but conditions not met - Grid: {_containerGrid != null}, FirstChild: {FirstChild != null}, SecondChild: {SecondChild != null}");
-#endif
         }
     }
 
@@ -196,17 +167,11 @@ public class FlexiPaneContainer : Control, IDisposable
     {
         if (_containerGrid == null || _isDisposed || _isApplyingTemplate) 
         {
-#if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[FlexiPaneContainer] UpdateLayout skipped - Grid: {_containerGrid != null}, Disposed: {_isDisposed}, Applying: {_isApplyingTemplate}");
-#endif
             return;
         }
 
         if (FirstChild == null || SecondChild == null) 
         {
-#if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[FlexiPaneContainer] UpdateLayout skipped - FirstChild: {FirstChild != null}, SecondChild: {SecondChild != null}");
-#endif
             return;
         }
 
@@ -221,15 +186,8 @@ public class FlexiPaneContainer : Control, IDisposable
 
         if (!layoutChanged && hasCorrectChildren)
         {
-#if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[FlexiPaneContainer] UpdateLayout skipped - no layout changes detected and children are correct");
-#endif
             return; // Skip update if nothing changed and children are properly placed
         }
-
-#if DEBUG
-        System.Diagnostics.Debug.WriteLine($"[FlexiPaneContainer] UpdateLayout proceeding - layoutChanged: {layoutChanged}, children: {_containerGrid.Children.Count}");
-#endif
 
         UpdateLayoutCore();
         
@@ -249,9 +207,6 @@ public class FlexiPaneContainer : Control, IDisposable
             // Double check that grid is still available
             if (_containerGrid == null)
             {
-#if DEBUG
-                System.Diagnostics.Debug.WriteLine($"[FlexiPaneContainer] UpdateLayoutCore - Grid became null, aborting");
-#endif
                 return;
             }
 
@@ -259,10 +214,6 @@ public class FlexiPaneContainer : Control, IDisposable
             _containerGrid.Children.Clear();
             _containerGrid.ColumnDefinitions.Clear();
             _containerGrid.RowDefinitions.Clear();
-
-#if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[FlexiPaneContainer] UpdateLayoutCore - Setting up {(IsVerticalSplit ? "vertical" : "horizontal")} split");
-#endif
 
             if (IsVerticalSplit)
             {
@@ -273,15 +224,10 @@ public class FlexiPaneContainer : Control, IDisposable
                 SetupHorizontalSplit();
             }
 
-#if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[FlexiPaneContainer] UpdateLayoutCore - Layout complete, children: {_containerGrid.Children.Count}");
-#endif
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-#if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[FlexiPaneContainer] UpdateLayoutCore error: {ex.Message}");
-#endif
+            // Silently handle exceptions during layout
         }
     }
 
@@ -403,11 +349,9 @@ public class FlexiPaneContainer : Control, IDisposable
 
             _containerGrid = null;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-#if DEBUG
-            System.Diagnostics.Debug.WriteLine($"FlexiPaneContainer Dispose error: {ex.Message}");
-#endif
+            // Silently handle exceptions during dispose
         }
     }
 

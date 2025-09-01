@@ -1,4 +1,6 @@
+#if DEBUG
 using System.Diagnostics;
+#endif
 using System.IO;
 using System.Text;
 using System.Windows;
