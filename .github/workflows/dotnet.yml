@@ -4,7 +4,6 @@ on:
   workflow_dispatch:
   push:
     branches: [ "main" ]
-    tags: [ "v*" ]
     paths:
       - 'src/**'
       - '.github/workflows/**'
@@ -39,17 +38,27 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-nuget-
     
-    - name: Extract version from tag
+    - name: Extract version from Directory.Build.props
       id: version
       run: |
-        if ('${{ github.ref }}' -like 'refs/tags/v*') {
-          $version = '${{ github.ref_name }}' -replace '^v', ''
-          echo "version=$version" >> $env:GITHUB_OUTPUT
-          echo "Using tag version: $version"
+        # Directory.Build.props에서 버전 추출
+        $propsFile = "src/Directory.Build.props"
+        if (Test-Path $propsFile) {
+          $content = Get-Content $propsFile -Raw
+          $versionMatch = [regex]::Match($content, '<Version>([^<]+)</Version>')
+          if ($versionMatch.Success) {
+            $version = $versionMatch.Groups[1].Value
+            echo "version=$version" >> $env:GITHUB_OUTPUT
+            echo "Using Directory.Build.props version: $version"
+          } else {
+            $version = "1.0.0-dev.${{ github.run_number }}"
+            echo "version=$version" >> $env:GITHUB_OUTPUT
+            echo "No version found in props, using dev version: $version"
+          }
         } else {
           $version = "1.0.0-dev.${{ github.run_number }}"
           echo "version=$version" >> $env:GITHUB_OUTPUT
-          echo "Using dev version: $version"
+          echo "Directory.Build.props not found, using dev version: $version"
         }
     
     - name: Restore dependencies
@@ -71,7 +80,7 @@ jobs:
   pack-and-publish:
     needs: build
     runs-on: windows-latest
-    if: github.event_name == 'push' && (startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
     
     steps:
     - uses: actions/checkout@v4
@@ -112,14 +121,9 @@ jobs:
       run: |
         $shouldPublish = $false
         $reason = "Unknown"
-        
-        # v태그가 있는 경우
-        if ('${{ github.ref }}' -like 'refs/tags/v*') {
-          $shouldPublish = $true
-          $reason = "Tag-based release (v*)"
-        }
+
         # 수동 실행인 경우
-        elseif ('${{ github.event_name }}' -eq 'workflow_dispatch') {
+        if ('${{ github.event_name }}' -eq 'workflow_dispatch') {
           $shouldPublish = $true
           $reason = "Manual workflow dispatch"
         }
@@ -135,10 +139,10 @@ jobs:
             $reason = "No version file changes detected"
           }
         }
-        
+
         Write-Host "Should publish: $shouldPublish"
         Write-Host "Reason: $reason"
-        
+
         echo "should-publish=$($shouldPublish.ToString().ToLower())" >> $env:GITHUB_OUTPUT
         echo "reason=$reason" >> $env:GITHUB_OUTPUT
     
@@ -173,51 +177,3 @@ jobs:
         name: nuget-packages
         path: nupkg/*.nupkg
 
-  create-release:
-    needs: [build, pack-and-publish]
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Download all artifacts
-      uses: actions/download-artifact@v4
-      with:
-        path: artifacts/
-    
-    - name: Create Release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ github.ref_name }}
-        release_name: FlexiPane.WPF ${{ github.ref_name }}
-        body: |
-          ## FlexiPane.WPF ${{ github.ref_name }}
-          
-          ### 📦 Published Packages
-          - **FlexiPane.WPF**: Dynamic WPF screen splitting library
-          
-          ### ✨ Features
-          - Dynamic panel splitting (vertical/horizontal)
-          - Interactive split mode with visual feedback
-          - Smart panel management and hierarchy simplification
-          - Layout persistence (save/load)
-          - Event-driven architecture
-          - Full XAML theming support
-          
-          ### 🛠️ Requirements
-          - .NET 9.0 or later
-          - Windows platform
-          - WPF application
-          
-          ### 📋 Installation
-          ```
-          dotnet add package FlexiPane.WPF
-          ```
-          
-          ### 📋 Changes
-          See [commits](https://github.com/iyulab/FlexiPane.WPF/compare/v${{ github.ref_name }}...HEAD) for details.
-        draft: false
-        prerelease: ${{ contains(github.ref_name, '-') }}
