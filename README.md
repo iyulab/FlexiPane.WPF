@@ -1,7 +1,7 @@
 # FlexiPane.WPF
 
-[![NuGet Version](https://img.shields.io/nuget/v/FlexiPane.WPF)](https://www.nuget.org/packages/FlexiPane.WPF)
-[![NuGet Downloads](https://img.shields.io/nuget/dt/FlexiPane.WPF)](https://www.nuget.org/packages/FlexiPane.WPF)
+[![NuGet Version](https://img.shields.io/nuget/v/FlexiPane)](https://www.nuget.org/packages/FlexiPane)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/FlexiPane)](https://www.nuget.org/packages/FlexiPane)
 [![.NET Build and NuGet Publish](https://github.com/iyulab/FlexiPane.WPF/actions/workflows/dotnet.yml/badge.svg)](https://github.com/iyulab/FlexiPane.WPF/actions/workflows/dotnet.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
