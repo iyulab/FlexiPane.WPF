@@ -509,6 +509,26 @@ FlexiPane.WPF ready.",
             FlexiPanel.Split(false, 0.5, CreateDefaultContent());
         }
 
+        private void ToggleCustomGuideButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Toggle between custom and default split guide
+            if (FlexiPanel.SplitGuideContentTemplate != null)
+            {
+                // Currently using custom template - switch to default
+                FlexiPanel.SplitGuideContentTemplate = null;
+                FlexiPanel.SplitGuideContent = null;
+                ToggleCustomGuideButton.Content = "Use Custom Guide";
+                MessageBox.Show("Switched to default split guide", "Split Guide", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            else
+            {
+                // Currently using default - switch to custom
+                FlexiPanel.SplitGuideContentTemplate = (DataTemplate)FindResource("CustomSplitGuideTemplate");
+                ToggleCustomGuideButton.Content = "Use Default Guide";
+                MessageBox.Show("Switched to custom split guide", "Split Guide", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+
         private void SaveLayoutButton_Click(object sender, RoutedEventArgs e)
         {
             var dialog = new SaveFileDialog

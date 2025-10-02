@@ -254,6 +254,48 @@ public partial class FlexiPanel : Control
         DependencyProperty.Register(nameof(PreferredSplitDirection), typeof(bool), typeof(FlexiPanel),
             new PropertyMetadata(false)); // Default to horizontal split
 
+    /// <summary>
+    /// Global split guide content for all FlexiPaneItems
+    /// </summary>
+    public object? SplitGuideContent
+    {
+        get { return GetValue(SplitGuideContentProperty); }
+        set { SetValue(SplitGuideContentProperty, value); }
+    }
+
+    public static readonly DependencyProperty SplitGuideContentProperty =
+        DependencyProperty.Register(nameof(SplitGuideContent), typeof(object), typeof(FlexiPanel),
+            new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.Inherits, OnSplitGuideContentChanged));
+
+    private static void OnSplitGuideContentChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is FlexiPanel panel)
+        {
+            panel.ApplySplitGuideContentToAllPanes(e.NewValue);
+        }
+    }
+
+    /// <summary>
+    /// Global split guide content template for all FlexiPaneItems
+    /// </summary>
+    public DataTemplate? SplitGuideContentTemplate
+    {
+        get { return (DataTemplate?)GetValue(SplitGuideContentTemplateProperty); }
+        set { SetValue(SplitGuideContentTemplateProperty, value); }
+    }
+
+    public static readonly DependencyProperty SplitGuideContentTemplateProperty =
+        DependencyProperty.Register(nameof(SplitGuideContentTemplate), typeof(DataTemplate), typeof(FlexiPanel),
+            new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.Inherits, OnSplitGuideContentTemplateChanged));
+
+    private static void OnSplitGuideContentTemplateChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is FlexiPanel panel)
+        {
+            panel.ApplySplitGuideContentTemplateToAllPanes(e.NewValue as DataTemplate);
+        }
+    }
+
     #endregion
 
     #region Internal Property Handlers
@@ -476,6 +518,9 @@ public partial class FlexiPanel : Control
                     else
                     {
                         e.Handled = true;
+                        
+                        // Apply global split guide settings to any new FlexiPaneItems created during split
+                        ApplyGlobalSplitGuideSettingsToNewPanes(result);
                         
                         // Validate and repair selection after split operation
                         Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, new Action(() =>
@@ -981,7 +1026,8 @@ public partial class FlexiPanel : Control
             // Split mode inherited through binding
         }
         
-        // Split mode inherited through binding automatically
+        // Apply global split guide settings to the new pane
+        ApplyGlobalSplitGuideSettings(initialPane);
         
         // Set as root content
         RootContent = initialPane;
@@ -1049,6 +1095,114 @@ public partial class FlexiPanel : Control
         }
     }
     
+    #endregion
+
+    #region Split Guide Content Management
+
+    /// <summary>
+    /// Apply split guide content to all FlexiPaneItems in the tree
+    /// </summary>
+    private void ApplySplitGuideContentToAllPanes(object? splitGuideContent)
+    {
+        ApplySplitGuideContentRecursively(RootContent, splitGuideContent);
+    }
+
+    /// <summary>
+    /// Apply split guide content template to all FlexiPaneItems in the tree
+    /// </summary>
+    private void ApplySplitGuideContentTemplateToAllPanes(DataTemplate? splitGuideContentTemplate)
+    {
+        ApplySplitGuideContentTemplateRecursively(RootContent, splitGuideContentTemplate);
+    }
+
+    /// <summary>
+    /// Recursively apply split guide content to all FlexiPaneItem elements
+    /// </summary>
+    private void ApplySplitGuideContentRecursively(UIElement? element, object? splitGuideContent)
+    {
+        if (element == null) return;
+
+        switch (element)
+        {
+            case FlexiPaneItem paneItem:
+                // Only apply if the pane doesn't have its own custom content
+                if (paneItem.SplitGuideContent == null)
+                {
+                    paneItem.SplitGuideContent = splitGuideContent;
+                }
+                break;
+
+            case FlexiPaneContainer container:
+                ApplySplitGuideContentRecursively(container.FirstChild, splitGuideContent);
+                ApplySplitGuideContentRecursively(container.SecondChild, splitGuideContent);
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Recursively apply split guide content template to all FlexiPaneItem elements
+    /// </summary>
+    private void ApplySplitGuideContentTemplateRecursively(UIElement? element, DataTemplate? splitGuideContentTemplate)
+    {
+        if (element == null) return;
+
+        switch (element)
+        {
+            case FlexiPaneItem paneItem:
+                // Only apply if the pane doesn't have its own custom template
+                if (paneItem.SplitGuideContentTemplate == null)
+                {
+                    paneItem.SplitGuideContentTemplate = splitGuideContentTemplate;
+                }
+                break;
+
+            case FlexiPaneContainer container:
+                ApplySplitGuideContentTemplateRecursively(container.FirstChild, splitGuideContentTemplate);
+                ApplySplitGuideContentTemplateRecursively(container.SecondChild, splitGuideContentTemplate);
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Apply global split guide settings to a single FlexiPaneItem
+    /// </summary>
+    private void ApplyGlobalSplitGuideSettings(FlexiPaneItem paneItem)
+    {
+        if (paneItem == null) return;
+
+        // Apply global split guide content if the item doesn't have its own
+        if (paneItem.SplitGuideContent == null && SplitGuideContent != null)
+        {
+            paneItem.SplitGuideContent = SplitGuideContent;
+        }
+
+        // Apply global split guide content template if the item doesn't have its own
+        if (paneItem.SplitGuideContentTemplate == null && SplitGuideContentTemplate != null)
+        {
+            paneItem.SplitGuideContentTemplate = SplitGuideContentTemplate;
+        }
+    }
+
+    /// <summary>
+    /// Apply global split guide settings to all FlexiPaneItems in the given subtree (used after split operations)
+    /// </summary>
+    private void ApplyGlobalSplitGuideSettingsToNewPanes(UIElement? subtree)
+    {
+        if (subtree == null) return;
+
+        switch (subtree)
+        {
+            case FlexiPaneItem paneItem:
+                ApplyGlobalSplitGuideSettings(paneItem);
+                break;
+
+            case FlexiPaneContainer container:
+                ApplyGlobalSplitGuideSettingsToNewPanes(container.FirstChild);
+                ApplyGlobalSplitGuideSettingsToNewPanes(container.SecondChild);
+                break;
+        }
+    }
+
     #endregion
 
     #region Helper Methods

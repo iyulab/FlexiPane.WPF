@@ -10,6 +10,45 @@
   Width="900"
   Height="600"
   mc:Ignorable="d">
+  
+  <Window.Resources>
+    <!-- Custom Split Guide Template -->
+    <DataTemplate x:Key="CustomSplitGuideTemplate">
+      <Border Background="#2E3440" CornerRadius="8" Padding="20">
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+          <TextBlock Text="🎯 Custom Split Guide" 
+                     FontSize="18" 
+                     FontWeight="Bold" 
+                     Foreground="#88C0D0" 
+                     HorizontalAlignment="Center" 
+                     Margin="0,0,0,10"/>
+          
+          <TextBlock Text="Click anywhere to split the panel" 
+                     FontSize="12" 
+                     Foreground="#D8DEE9" 
+                     HorizontalAlignment="Center" 
+                     Margin="0,0,0,5"/>
+          
+          <TextBlock Text="Use edges to change direction" 
+                     FontSize="10" 
+                     Foreground="#81A1C1" 
+                     HorizontalAlignment="Center" 
+                     FontStyle="Italic"/>
+          
+          <Border Background="#4C566A" 
+                  CornerRadius="4" 
+                  Padding="8,4" 
+                  Margin="0,10,0,0">
+            <TextBlock Text="Space: Toggle Direction | Esc: Exit" 
+                       FontSize="9" 
+                       Foreground="#ECEFF4" 
+                       HorizontalAlignment="Center"/>
+          </Border>
+        </StackPanel>
+      </Border>
+    </DataTemplate>
+  </Window.Resources>
+  
   <Grid>
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto" />
@@ -34,6 +73,12 @@
         Click="SplitHorizontalButton_Click"
         Content="Horizontal Split"
         ToolTip="Split current pane horizontally" />
+      <Separator />
+      <Button
+        x:Name="ToggleCustomGuideButton"
+        Click="ToggleCustomGuideButton_Click"
+        Content="Toggle Custom Guide"
+        ToolTip="Toggle between default and custom split guide" />
       <Separator />
       <Button
         x:Name="SaveLayoutButton"
@@ -64,7 +109,9 @@
         ToolTip="Load preset simple layout" />
     </ToolBar>
 
-    <!--  Main Content Area  -->
-    <flexiPane:FlexiPanel x:Name="FlexiPanel" Grid.Row="1" />
+    <!--  Main Content Area with Custom Split Guide Template -->
+    <flexiPane:FlexiPanel x:Name="FlexiPanel" 
+                          Grid.Row="1"
+                          SplitGuideContentTemplate="{StaticResource CustomSplitGuideTemplate}" />
   </Grid>
 </Window>

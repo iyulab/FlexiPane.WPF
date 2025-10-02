@@ -152,7 +152,8 @@ public class FlexiPaneItem : ContentControl, IDisposable
     {
         if (d is FlexiPaneItem pane && !pane._isDisposed)
         {
-            pane.UpdateGuidePanel();
+            // Automatically hide default guide panel when custom content is provided
+            pane.UpdateShowDefaultGuidePanel();
         }
     }
 
@@ -167,7 +168,16 @@ public class FlexiPaneItem : ContentControl, IDisposable
 
     public static readonly DependencyProperty SplitGuideContentTemplateProperty =
         DependencyProperty.Register(nameof(SplitGuideContentTemplate), typeof(DataTemplate), typeof(FlexiPaneItem),
-            new PropertyMetadata(null));
+            new PropertyMetadata(null, OnSplitGuideContentTemplateChanged));
+
+    private static void OnSplitGuideContentTemplateChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is FlexiPaneItem pane && !pane._isDisposed)
+        {
+            // Automatically hide default guide panel when custom template is provided
+            pane.UpdateShowDefaultGuidePanel();
+        }
+    }
 
     /// <summary>
     /// Whether to show default split guide panel
@@ -181,7 +191,6 @@ public class FlexiPaneItem : ContentControl, IDisposable
     public static readonly DependencyProperty ShowDefaultGuidePanelProperty =
         DependencyProperty.Register(nameof(ShowDefaultGuidePanel), typeof(bool), typeof(FlexiPaneItem),
             new PropertyMetadata(true));
-
 
     #endregion
 
@@ -654,11 +663,8 @@ public class FlexiPaneItem : ContentControl, IDisposable
 
     private void UpdateGuidePanel()
     {
-        if (_defaultGuidePanel == null) return;
-
-        // Hide default panel if custom content exists
-        bool hasCustomContent = SplitGuideContent != null;
-        _defaultGuidePanel.Visibility = hasCustomContent ? Visibility.Collapsed : Visibility.Visible;
+        // Guide panel visibility is now automatically managed by ShowDefaultGuidePanel property
+        // and SplitGuideContent property changes
     }
 
     private void UpdateGuideLines(Point mousePosition)
@@ -842,6 +848,16 @@ public class FlexiPaneItem : ContentControl, IDisposable
             _currentSplitDirection = newDirection;
             UpdateSplitModeGuideText();
         }
+    }
+
+    /// <summary>
+    /// Update the visibility of the default guide panel based on custom content/template availability
+    /// </summary>
+    private void UpdateShowDefaultGuidePanel()
+    {
+        // Hide default guide panel if either custom content or custom template is provided
+        bool hasCustomGuide = SplitGuideContent != null || SplitGuideContentTemplate != null;
+        ShowDefaultGuidePanel = !hasCustomGuide;
     }
     
     #endregion

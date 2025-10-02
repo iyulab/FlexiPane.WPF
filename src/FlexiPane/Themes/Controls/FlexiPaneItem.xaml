@@ -1,7 +1,8 @@
 <ResourceDictionary
   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-  xmlns:controls="clr-namespace:FlexiPane.Controls">
+  xmlns:controls="clr-namespace:FlexiPane.Controls"
+  xmlns:local="clr-namespace:FlexiPane.Converters">
 
   <!--  Local BooleanToVisibilityConverter for this resource dictionary  -->
   <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
@@ -63,13 +64,6 @@
               Focusable="True"
               Visibility="{Binding Path=IsSplitModeActive, RelativeSource={RelativeSource AncestorType=controls:FlexiPanel}, Converter={StaticResource BooleanToVisibilityConverter}}">
 
-              <!--  Dark background  -->
-              <Border
-                Margin="2"
-                Background="#C0000000"
-                CornerRadius="4"
-                Opacity="0.6" />
-
               <!--  Split guide  -->
               <Grid Background="Transparent">
                 <!--  Dynamic split guide lines (red solid lines)  -->
@@ -91,14 +85,14 @@
                   Fill="#FFFF0000"
                   Opacity="0" />
 
-                <!--  Top guide (상하영역 오버 → 좌우분할모드)  -->
+                <!--  Top guide (Hover top/bottom area → Vertical split mode)  -->
                 <Border
                   Height="24"
                   VerticalAlignment="Top"
                   Background="#60007ACC"
                   BorderBrush="#FF007ACC"
                   BorderThickness="0,0,0,1"
-                  ToolTip="상하영역 오버 → 좌우분할모드 (VERTICAL split)">
+                  ToolTip="Hover top/bottom area → Vertical split mode">
                   <StackPanel
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
@@ -111,14 +105,14 @@
                   </StackPanel>
                 </Border>
 
-                <!--  Bottom guide (상하영역 오버 → 좌우분할모드)  -->
+                <!--  Bottom guide (Hover top/bottom area → Vertical split mode)  -->
                 <Border
                   Height="24"
                   VerticalAlignment="Bottom"
                   Background="#60007ACC"
                   BorderBrush="#FF007ACC"
                   BorderThickness="0,1,0,0"
-                  ToolTip="상하영역 오버 → 좌우분할모드 (VERTICAL split)">
+                  ToolTip="Hover top/bottom area → Vertical split mode">
                   <StackPanel
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
@@ -131,14 +125,14 @@
                   </StackPanel>
                 </Border>
 
-                <!--  Left guide (좌우영역 오버 → 상하분할모드)  -->
+                <!--  Left guide (Hover left/right area → Horizontal split mode)  -->
                 <Border
                   Width="24"
                   HorizontalAlignment="Left"
                   Background="#6000CC44"
                   BorderBrush="#FF00CC44"
                   BorderThickness="0,0,1,0"
-                  ToolTip="좌우영역 오버 → 상하분할모드 (HORIZONTAL split)">
+                  ToolTip="Hover left/right area → Horizontal split mode">
                   <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                     <TextBlock
                       FontSize="16"
@@ -148,14 +142,14 @@
                   </StackPanel>
                 </Border>
 
-                <!--  Right guide (좌우영역 오버 → 상하분할모드)  -->
+                <!--  Right guide (Hover left/right area → Horizontal split mode)  -->
                 <Border
                   Width="24"
                   HorizontalAlignment="Right"
                   Background="#6000CC44"
                   BorderBrush="#FF00CC44"
                   BorderThickness="1,0,0,0"
-                  ToolTip="좌우영역 오버 → 상하분할모드 (HORIZONTAL split)">
+                  ToolTip="Hover left/right area → Horizontal split mode">
                   <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                     <TextBlock
                       FontSize="16"
@@ -174,7 +168,7 @@
                   Content="{TemplateBinding SplitGuideContent}"
                   ContentTemplate="{TemplateBinding SplitGuideContentTemplate}" />
 
-                <!--  Default center guide panel  -->
+                <!--  Default center guide panel - only visible when no custom content  -->
                 <Border
                   x:Name="PART_DefaultGuidePanel"
                   Margin="40"
@@ -184,7 +178,8 @@
                   Background="#F0FFFFFF"
                   BorderBrush="#FF007ACC"
                   BorderThickness="2"
-                  CornerRadius="6">
+                  CornerRadius="6"
+                  Visibility="{Binding Path=ShowDefaultGuidePanel, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityConverter}}">
                   <StackPanel>
                     <TextBlock
                       Margin="4"
@@ -205,6 +200,12 @@
                       FontSize="12"
                       Foreground="#FF666666"
                       Text="SPACE: Toggle direction" />
+                    <TextBlock
+                      Margin="6,2"
+                      HorizontalAlignment="Center"
+                      FontSize="12"
+                      Foreground="#FF666666"
+                      Text="Ctrl+W: Close pane" />
                     <TextBlock
                       Margin="6,2"
                       HorizontalAlignment="Center"

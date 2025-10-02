@@ -91,6 +91,12 @@ public static class FlexiPaneManager
             CanSplit = flexiPanel.IsSplitModeActive
         };
 
+        // Apply global split guide settings to the new pane
+        ApplyGlobalSplitGuideSettings(newPane, flexiPanel);
+
+        // Also apply to source pane in case it doesn't have the settings
+        ApplyGlobalSplitGuideSettings(sourcePane, flexiPanel);
+
         // Now set children after template is ready
         
         container.FirstChild = sourcePane;
@@ -312,6 +318,26 @@ public static class FlexiPaneManager
         if (e.Pane != null)
         {
             DisconnectPaneEvents(e.Pane);
+        }
+    }
+
+    /// <summary>
+    /// Apply global split guide settings from FlexiPanel to a FlexiPaneItem
+    /// </summary>
+    private static void ApplyGlobalSplitGuideSettings(FlexiPaneItem paneItem, FlexiPanel flexiPanel)
+    {
+        if (paneItem == null || flexiPanel == null) return;
+
+        // Apply global split guide content if the item doesn't have its own
+        if (paneItem.SplitGuideContent == null && flexiPanel.SplitGuideContent != null)
+        {
+            paneItem.SplitGuideContent = flexiPanel.SplitGuideContent;
+        }
+
+        // Apply global split guide content template if the item doesn't have its own
+        if (paneItem.SplitGuideContentTemplate == null && flexiPanel.SplitGuideContentTemplate != null)
+        {
+            paneItem.SplitGuideContentTemplate = flexiPanel.SplitGuideContentTemplate;
         }
     }
 }
